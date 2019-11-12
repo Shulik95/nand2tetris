@@ -57,7 +57,8 @@ CHIP ALU {
     Mux16(a=xAndy, b=xAddy, sel=f, out=functionXY);
 
     Not16(in=functionXY, out=NfunctionXY);
-    Mux16(a=functionXY, b=NfunctionXY, sel=no, out[15]=ng, out[0..7]=firstHalf, out[8..15]=secondHalf, out=out);
+    Mux16(a=functionXY, b=NfunctionXY, sel=no, out[15]=ng, out[0..7]=firstHalf, out[8..15]=secondHalf,
+      out=out);
 
     Or8Way(in=firstHalf, out=part1);
     Or8Way(in=secondHalf, out= part2);
