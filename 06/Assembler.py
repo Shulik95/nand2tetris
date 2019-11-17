@@ -80,3 +80,22 @@ symbols = {
     "SCREEN": "16384",
     "KBD": "24576"
 }
+
+filename = sys.argv[1]  # get the name of the file to translate
+
+
+def clean_line(line):
+    """
+    This function clears away all white space from the line. white space
+    includes in line comments and comment lines.
+    :param line: The line to clear.
+    :return: A string which is the clear version of its input.
+    """
+    letter = line[0]
+    if letter == "/":
+        return ""
+    elif letter == " ":
+        return clean_line(line[1:])
+    else:
+        return letter + clean_line(line[1:])
+
