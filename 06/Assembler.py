@@ -81,21 +81,27 @@ symbols = {
     "KBD": "24576"
 }
 
-filename = sys.argv[1]  # get the name of the file to translate
+#filename = sys.argv[1]  # get the name of the file to translate
 
 
-def clean_line(line):
+def clean_line2(line):
     """
     This function clears away all white space from the line. white space
     includes in line comments and comment lines.
     :param line: The line to clear.
     :return: A string which is the clear version of its input.
     """
-    letter = line[0]
-    if letter == "/":
-        return ""
-    elif letter == " ":
-        return clean_line(line[1:])
-    else:
-        return letter + clean_line(line[1:])
+    cleaned = ""  # an empty string for adding chars
+    for char in line:
+        if char == "/" or char == "\n":
+            continue
+        elif char == " ":
+            continue
+        else:
+            cleaned += char
+    return cleaned
 
+
+
+if __name__ == "__main__":
+    print(clean_line2("sdfasdf   df sdf "))
