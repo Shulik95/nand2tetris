@@ -13,7 +13,7 @@ comp = {
     "-A": "0110011",
     "D+1": "0011111",
     "A+1": "0110111",
-    "D-1": "001110",
+    "D-1": "0001110",
     "A-1": "0110010",
     "D+A": "0000010",
     "D-A": "0010011",
@@ -52,7 +52,7 @@ jump = {
     "JLT": "100",
     "JNE": "101",
     "JLE": "110",
-    "JNP": "111"
+    "JMP": "111"
 }
 
 symbols = {
@@ -80,6 +80,8 @@ symbols = {
     "SCREEN": "16384",
     "KBD": "24576"
 }
+
+var_counter = 16  # index for each var or label in our code
 
 
 def clean_line(line):
@@ -146,9 +148,7 @@ def c_instruction(line):
     temp1 = formated.split("=")  # get dest from string.
     destination = temp1[0]
     compute, jmp = temp1[1].split(";")  # get comp and jmp
-    print(comp[compute]+" = comp", dest[destination]+" = dest", jump[jmp]+" = jmp")
     binfinal = "111" + comp[compute] + dest[destination] + jump[jmp]
-    print(binfinal)
     return binfinal  # returns binary rep of C-instruction
 
 
@@ -189,7 +189,8 @@ def main():
     filename = sys.argv[1]  # get the name of the file to translate
     if os.path.isdir(filename):
         file_list = os.listdir(filename)  # get list of all files.
-        mult_assembler(file_list)
+        for file in file_list:
+            assembler(filename + "\\" + file)
     else:
         assembler(filename)
 
@@ -210,16 +211,42 @@ def assembler(filename):
     :param filename:
     :return:
     """
-    f = open(filename[:-4]+".hack", "w")
+    f = open(filename[:-4] + ".hack", "w")
     lines = read_asm(filename)
     for line in lines:
         new_line = clean_line(line)
         bin_line = get_instruction_type(new_line)
         if not bin_line:
             continue
-        f.write(bin_line+"\n")
+        f.write(bin_line + "\n")
     f.close()
 
 
+def first_pass():
+    """
+
+    :param filename:
+    :return:
+    """
+    my_vals=[]
+    temp = read_asm(sys.argv[1])
+    list = []
+    for item in temp:
+        cleaned = clean_line(item)
+        if not cleaned:
+            continue
+        list.append(cleaned)
+    for line, val in enumerate(list):
+        my_vals.append((line, val))
+    return my_vals
+
+def new_func():
+    all_vals=first_pass()
+    for i in range(len(all_vals)):
+        if '(' in all_vals[i][1]:
+            symbols[all_vals[i][1]][1:-1]=all_vals[i][0]
+    print(symbols)
+
+
 if __name__ == "__main__":
-    main()
+    new_func()
