@@ -85,7 +85,7 @@ symbols = {
 # filename = sys.argv[1]  # get the name of the file to translate
 
 
-def clean_line2(line):
+def clean_line(line):
     """
     This function clears away all white space from the line. white space
     includes in line comments and comment lines.
@@ -94,9 +94,7 @@ def clean_line2(line):
     """
     cleaned = ""  # an empty string for adding chars
     for char in line:
-        if char == "/" or char == "\n":
-            continue
-        elif char == " ":
+        if char == "/" or char == "\n" or char == " ":
             continue
         else:
             cleaned += char
@@ -120,7 +118,8 @@ def a_instruction(line: str) -> str:
     """
     This function translates a line into a legal A-instruction. starts with
     checking if we got a number or a variable. than handles each of the cases
-    accordingly.
+    accordingly. we assume all symbols have been already added in the first
+    run over
     :param line: a line containing an A-instruction. where @ is removed.
     :return: returns the binary representation of the instruction.
     """
@@ -139,8 +138,23 @@ def c_instruction(line):
     :param line: a line containing a C-instruction, no white-spaces.
     :return: returns a 16 bit bus representing the instruction.
     """
-    pass
+
+
+def c_helper(line):
+    """
+    this function is an helper for the C-instruction translator, it puts a
+    line into the "dest=comp;jump" formation, which makes it easy to deal with
+    different instruction.
+    :param line: a line cleaned from white-space.
+    :return: returns a C-instruction in "dest=comp;jump" format.
+    """
+    if "=" not in line:
+        line = "null=" + line
+    elif ";" not in line:
+        line += ";null"
+    return line
 
 
 if __name__ == "__main__":
-    print(get_instruction_type("@THAT"))
+    print(clean_line("shulik  // \n  / hadar"))
+    print(a_instruction("R5"))
