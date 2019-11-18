@@ -166,5 +166,25 @@ def c_helper(line):
     return line
 
 
+def read_asm(filename):
+    """
+
+    :param filename:
+    :return:
+    """
+    f = open(filename)
+    all_lines = f.readlines()
+    lines = [line for line in all_lines]  # create a list of all text lines.
+    return lines
+
+def write_hack(filename):
+    """
+
+    :param filename:
+    :return:
+    """
+    pass
+
+
 if __name__ == "__main__":
     print(clean_line("shulik //asdafsag"))
