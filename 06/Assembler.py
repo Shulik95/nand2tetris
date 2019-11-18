@@ -1,11 +1,11 @@
-import sys, os, copy
+import sys, os
 
 # A dictionary holding all computation values.
 comp = {
     "0": "0101010",
     "1": "0111111",
     "-1": "0111010",
-    "D": "001100",
+    "D": "0001100",
     "A": "0110000",
     "!D": "0001101",
     "!A": "0110001",
@@ -82,9 +82,6 @@ symbols = {
 }
 
 
-# filename = sys.argv[1]  # get the name of the file to translate
-
-
 def clean_line(line):
     """
     This function clears away all white space from the line. white space
@@ -112,10 +109,12 @@ def get_instruction_type(line):
     :param line: a line with no white-spaces.
     :return: the binary representation of the command.
     """
+    if line == "":
+        return
     if line[0] == "@":
         return a_instruction(line[1:])  # remove the "@".
     else:
-        return c_instruction(line)
+        return c_instruction(line)  # get binary c instruction
 
 
 def a_instruction(line: str) -> str:
@@ -147,7 +146,9 @@ def c_instruction(line):
     temp1 = formated.split("=")  # get dest from string.
     destination = temp1[0]
     compute, jmp = temp1[1].split(";")  # get comp and jmp
-    binfinal = "111" + dest[destination] + comp[compute] + jump[jmp]
+    print(comp[compute]+" = comp", dest[destination]+" = dest", jump[jmp]+" = jmp")
+    binfinal = "111" + comp[compute] + dest[destination] + jump[jmp]
+    print(binfinal)
     return binfinal  # returns binary rep of C-instruction
 
 
@@ -175,16 +176,50 @@ def read_asm(filename):
     f = open(filename)
     all_lines = f.readlines()
     lines = [line for line in all_lines]  # create a list of all text lines.
+    f.close()
     return lines
 
-def write_hack(filename):
+
+def main():
+    """
+    this function distingushes if the path leads to a file or a folder, acts
+    accordingly.
+    :return: returns the file name of the
+    """
+    filename = sys.argv[1]  # get the name of the file to translate
+    if os.path.isdir(filename):
+        file_list = os.listdir(filename)  # get list of all files.
+        mult_assembler(file_list)
+    else:
+        assembler(filename)
+
+
+def mult_assembler(file_list):
+    """
+
+    :param file_list:
+    :return:
+    """
+    for file in file_list:
+        assembler(file)
+
+
+def assembler(filename):
     """
 
     :param filename:
     :return:
     """
-    pass
+    f = open(filename[:-4]+".hack", "w")
+    lines = read_asm(filename)
+    for line in lines:
+        new_line = clean_line(line)
+        bin_line = get_instruction_type(new_line)
+        if not bin_line:
+            continue
+        f.write(bin_line+"\n")
+    f.close()
 
 
 if __name__ == "__main__":
-    print(clean_line("shulik //asdafsag"))
+    main()
