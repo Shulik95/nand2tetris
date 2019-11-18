@@ -139,6 +139,14 @@ def c_instruction(line):
     :return: returns a 16 bit bus representing the instruction.
     """
 
+    formated = c_helper(line)
+    temp1 = formated.split("=")
+    destination = temp1[0]
+    compute, jmp = temp1[1].split(";")
+    bfinal = "111" + dest[destination] + comp[compute] + jump[jmp]
+    return bfinal  # returns binary rep of C-instruction
+
+
 
 def c_helper(line):
     """
@@ -156,5 +164,4 @@ def c_helper(line):
 
 
 if __name__ == "__main__":
-    print(clean_line("shulik  // \n  / hadar"))
-    print(a_instruction("R5"))
+   
