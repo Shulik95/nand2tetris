@@ -81,7 +81,8 @@ symbols = {
     "KBD": "24576"
 }
 
-#filename = sys.argv[1]  # get the name of the file to translate
+
+# filename = sys.argv[1]  # get the name of the file to translate
 
 
 def clean_line2(line):
@@ -102,6 +103,44 @@ def clean_line2(line):
     return cleaned
 
 
+def get_instruction_type(line):
+    """
+    Receives a cleaned line and determines the type of the instruction,
+    calls the appropriate function to deal with the instruction.
+    :param line: a line with no white-spaces.
+    :return: the binary representation of the command.
+    """
+    if line[0] == "@":
+        return a_instruction(line[1:])  # remove the "@".
+    else:
+        return c_instruction(line)
+
+
+def a_instruction(line: str) -> str:
+    """
+    This function translates a line into a legal A-instruction. starts with
+    checking if we got a number or a variable. than handles each of the cases
+    accordingly.
+    :param line: a line containing an A-instruction. where @ is removed.
+    :return: returns the binary representation of the instruction.
+    """
+    if line.isdigit():
+        # returns the binary value in 16 bits.
+        final_val = line
+    else:
+        final_val = symbols.get(line)  # get symbol val from table.
+    return bin(int(final_val))[2:].zfill(16)
+
+
+def c_instruction(line):
+    """
+    Receives a line which describes a C-instruction. translates into the
+    needed format.
+    :param line: a line containing a C-instruction, no white-spaces.
+    :return: returns a 16 bit bus representing the instruction.
+    """
+    pass
+
 
 if __name__ == "__main__":
-    print(clean_line2("sdfasdf   df sdf "))
+    print(get_instruction_type("@THAT"))
