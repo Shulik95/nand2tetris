@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, copy
 
 # A dictionary holding all computation values.
 comp = {
@@ -92,10 +92,14 @@ def clean_line(line):
     :param line: The line to clear.
     :return: A string which is the clear version of its input.
     """
+
     cleaned = ""  # an empty string for adding chars
     for char in line:
-        if char == "/" or char == "\n" or char == " ":
-            continue
+        if char == "/":
+            cleaned += ""
+            break  # no need to keep iterating, only line comments left.
+        elif char == "\n" or char == " ":
+            cleaned += ""
         else:
             cleaned += char
     return cleaned
@@ -140,12 +144,11 @@ def c_instruction(line):
     """
 
     formated = c_helper(line)
-    temp1 = formated.split("=")
+    temp1 = formated.split("=")  # get dest from string.
     destination = temp1[0]
-    compute, jmp = temp1[1].split(";")
-    bfinal = "111" + dest[destination] + comp[compute] + jump[jmp]
-    return bfinal  # returns binary rep of C-instruction
-
+    compute, jmp = temp1[1].split(";")  # get comp and jmp
+    binfinal = "111" + dest[destination] + comp[compute] + jump[jmp]
+    return binfinal  # returns binary rep of C-instruction
 
 
 def c_helper(line):
@@ -164,4 +167,4 @@ def c_helper(line):
 
 
 if __name__ == "__main__":
-   
+    print(clean_line("shulik //asdafsag"))
