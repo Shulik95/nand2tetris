@@ -195,16 +195,6 @@ def main():
         assembler(filename)
 
 
-def mult_assembler(file_list):
-    """
-
-    :param file_list:
-    :return:
-    """
-    for file in file_list:
-        assembler(file)
-
-
 def assembler(filename):
     """
 
@@ -214,6 +204,8 @@ def assembler(filename):
     f = open(filename[:-4] + ".hack", "w")
     lines = read_asm(filename)
     for line in lines:
+        if line[0] == "(":  # ignore labels while assembling
+            continue
         new_line = clean_line(line)
         bin_line = get_instruction_type(new_line)
         if not bin_line:
@@ -222,31 +214,26 @@ def assembler(filename):
     f.close()
 
 
-def first_pass():
+def firstPass():
     """
 
-    :param filename:
-    :return:
+    :return: 
     """
-    my_vals=[]
-    temp = read_asm(sys.argv[1])
-    list = []
-    for item in temp:
-        cleaned = clean_line(item)
-        if not cleaned:
+    line_counter = 0
+    temp_file = open(sys.argv[1])
+    for line in temp_file:
+        temp_line = clean_line(line)
+        if not temp_line:
             continue
-        list.append(cleaned)
-    for line, val in enumerate(list):
-        my_vals.append((line, val))
-    return my_vals
-
-def new_func():
-    all_vals=first_pass()
-    for i in range(len(all_vals)):
-        if '(' in all_vals[i][1]:
-            symbols[all_vals[i][1]][1:-1]=all_vals[i][0]
-    print(symbols)
+        elif temp_line[0] == "(":  # add label to symbol dict
+            label = temp_line[1:-1]  # remove parentheses
+            symbols[label] = line_counter
+        else:
+            line_counter += 1
+    temp_file.close()
 
 
 if __name__ == "__main__":
-    new_func()
+    print(symbols)
+    firstPass()
+    print(symbols)
