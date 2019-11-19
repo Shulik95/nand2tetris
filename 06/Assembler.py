@@ -208,7 +208,7 @@ def assembler(filename):
     code.
     :param filename: the file to translate.
     """
-    firstPass(filename)
+    first_pass(filename)
     f = open(filename[:-4] + ".hack", "w")
     lines = read_asm(filename)
     for line in lines:
@@ -222,7 +222,7 @@ def assembler(filename):
     f.close()
 
 
-def firstPass(filename):
+def first_pass(filename):
     """
     iterates through the given .asm file and finds labels, adds them to symbol
     table with fitting value.
@@ -237,8 +237,9 @@ def firstPass(filename):
             label = temp_line[1:-1]  # remove parentheses
             symbols[label] = line_counter
         else:
-            line_counter += 1 
+            line_counter += 1
     temp_file.close()
 
 
 if __name__ == "__main__":
+    main()
