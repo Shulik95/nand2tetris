@@ -30,7 +30,6 @@ comp = {
     "M-D": "1000111",
     "D&M": "1000000",
     "D|M": "1010101",
-    "D>>": ""
 }
 
 # A dictionary holding all destination values
@@ -80,6 +79,15 @@ symbols = {
     "R15": "15",
     "SCREEN": "16384",
     "KBD": "24576"
+}
+
+shift = {
+    "D<<": "0110000",
+    "D>>": "0010000",
+    "A<<": "0100000",
+    "A>>": "0000000",
+    "M<<": "1100000",
+    "M>>": "1000000"
 }
 
 var_counter = 16  # index for each var or label in our code
@@ -149,13 +157,16 @@ def c_instruction(line):
     :param line: a line containing a C-instruction, no white-spaces.
     :return: returns a 16 bit bus representing the instruction.
     """
-
     formated = c_helper(line)
     temp1 = formated.split("=")  # get dest from string.
     destination = temp1[0]
     compute, jmp = temp1[1].split(";")  # get comp and jmp
-    binfinal = "111" + comp[compute] + dest[destination] + jump[jmp]
-    return binfinal  # returns binary rep of C-instruction
+    if comp.get(compute, -1) == -1:
+        binfinal = "101" + shift[compute]
+    else:
+        binfinal = "111" + comp[compute]
+        # returns binary rep of C-instruction
+    return binfinal + dest[destination] + jump[jmp]
 
 
 def c_helper(line):
