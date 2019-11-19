@@ -128,7 +128,7 @@ def get_instruction_type(line):
         return c_instruction(line)  # get binary c instruction
 
 
-def a_instruction(line: str) -> str:
+def a_instruction(line):
     """
     This function translates a line into a legal A-instruction. starts with
     checking if we got a number or a variable. than handles each of the cases
