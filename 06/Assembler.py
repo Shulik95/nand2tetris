@@ -29,7 +29,8 @@ comp = {
     "D-M": "1010011",
     "M-D": "1000111",
     "D&M": "1000000",
-    "D|M": "1010101"
+    "D|M": "1010101",
+    "D>>": ""
 }
 
 # A dictionary holding all destination values
