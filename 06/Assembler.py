@@ -132,7 +132,12 @@ def a_instruction(line: str) -> str:
         # returns the binary value in 16 bits.
         final_val = line
     else:
-        final_val = symbols.get(line)  # get symbol val from table.
+        final_val = symbols.get(line, 0.5)  # get symbol val from table.
+        if final_val == 0.5:  # ad new variable to symbol table
+            global var_counter
+            symbols[line] = var_counter
+            var_counter += 1
+            final_val = symbols[line]
     return bin(int(final_val))[2:].zfill(16)
 
 
@@ -169,9 +174,9 @@ def c_helper(line):
 
 def read_asm(filename):
     """
-
-    :param filename:
-    :return:
+    This function opens a file and reads it.
+    :param filename:the file to read.
+    :return:a list of all lines in the file.
     """
     f = open(filename)
     all_lines = f.readlines()
@@ -182,9 +187,11 @@ def read_asm(filename):
 
 def main():
     """
-    this function distingushes if the path leads to a file or a folder, acts
-    accordingly.
-    :return: returns the file name of the
+    The main function of the program, includes everything needed for it to
+    run. this function distinguishes if the path leads to a file or a folder,
+    acts accordingly.
+    :return: creates a hack file containing the binary translation of the
+    given program.
     """
     filename = sys.argv[1]  # get the name of the file to translate
     if os.path.isdir(filename):
@@ -197,10 +204,11 @@ def main():
 
 def assembler(filename):
     """
-
-    :param filename:
-    :return:
+    this function reads a given .asm file and translates it into binary
+    code.
+    :param filename: the file to translate.
     """
+    firstPass(filename)
     f = open(filename[:-4] + ".hack", "w")
     lines = read_asm(filename)
     for line in lines:
@@ -214,13 +222,13 @@ def assembler(filename):
     f.close()
 
 
-def firstPass():
+def firstPass(filename):
     """
-
-    :return: 
+    iterates through the given .asm file and finds labels, adds them to symbol
+    table with fitting value.
     """
     line_counter = 0
-    temp_file = open(sys.argv[1])
+    temp_file = open(filename)
     for line in temp_file:
         temp_line = clean_line(line)
         if not temp_line:
@@ -229,11 +237,8 @@ def firstPass():
             label = temp_line[1:-1]  # remove parentheses
             symbols[label] = line_counter
         else:
-            line_counter += 1
+            line_counter += 1 
     temp_file.close()
 
 
 if __name__ == "__main__":
-    print(symbols)
-    firstPass()
-    print(symbols)
