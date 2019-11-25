@@ -11,7 +11,7 @@ class Parser:
 
         :param input_file: pu
         """
-        self.file = input_file
+        self.file = open(input_file)
         self.lines = self.file.readlines()
         self.curr_line = None
         self.line_counter = 0
@@ -54,9 +54,15 @@ class Parser:
         temp_line = self.__clean_line()
         return self.command_dict[temp_line[0]]
 
+    def arg1(self):
+        return self.__clean_line()[0]
+
+    def arg2(self):
+        if self.command_dict[self.arg1()] == 'C_PUSH' or (self.command_dict[self.arg1()] == 'C_POP'):
+            return self.__clean_line()[2]
+
     def __clean_line(self):
         """
-
         :return:
         """
         if len(self.curr_line.split()) > 1:
@@ -75,10 +81,38 @@ class Parser:
         return [cleaned]
 
 
+class CodeWriter:
+
+    def __init__(self, output_file):
+        """
+
+        :param output_file:
+        """
+        self.file = open(output_file, "w")
+
+    def write_arithmetic(self, command):
+        """
+
+        :param command:
+        :return:
+        """
+        pass
+
+    def write_push_pop(self, command, segment, index):
+        """
+
+        :param command:
+        :param segment:
+        :param index:
+        :return:
+        """
+        if command == "C_PUSH":
+            pass
+        pass
+
+
 if __name__ == '__main__':
-    filename = sys.argv[1]
-    file = open(filename)
-    temp_P = Parser(file)
+    temp_P = Parser(sys.argv[1])
     while temp_P.has_more_commands():
         temp_P.advance()
-        print(temp_P.command_type())
+        print(temp_P.arg2())
