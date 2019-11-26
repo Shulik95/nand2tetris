@@ -89,6 +89,16 @@ class CodeWriter:
         :param output_file:
         """
         self.file = open(output_file, "w")
+        self.addr = {"local": "LCL",
+                     "argument": "ARG",
+                     "this": "THIS",
+                     "that": "THAT",
+                     "static": "STATIC",
+                     "temp": 5,
+                     "pointer": 3
+                     }
+
+        self.file_name = output_file[:-2]
 
     def write_arithmetic(self, command):
         """
@@ -107,8 +117,60 @@ class CodeWriter:
         :return:
         """
         if command == "C_PUSH":
-            pass
-        pass
+            if segment == "constant":
+                self.write("@" + str(index))
+                self.write("D=A")
+                self.push_to_stack()
+            elif segment in ["argument", "local", "this", "that"]:
+                self.write("@" + str(index))  # access address LCL+index
+                self.write("D=A")
+                self.write("@" + self.addr[segment])
+                self.write("D=D+M")
+                self.write("A=D")
+                self.write("D=M")  # *addr
+                self.push_to_stack()  # *addr = *sp
+            elif segment == "static":
+                self.write("@" + self.file_name + str(index))
+                self.write("D=M")
+                self.push_to_stack()
+            elif segment == "temp" or segment == "pointer":
+                self.write("@R" + str(self.addr[segment] + index))
+                self.write("D=M")
+                self.push_to_stack()
+
+        elif command == "C_POP":
+            if segment == 'static':
+                self.pop_from_stack()  # assigns value to D
+                self.write('@' + self.file_name + str(index))
+                self.write('M=D')  #
+
+    def push_to_stack(self):
+        """
+
+        :return:
+        """
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
+
+    def pop_from_stack(self):
+        """
+
+        :return:
+        """
+        self.write("@SP")
+        self.write("M=M-1")
+        self.write("A=M")
+        self.write("D=M")
+
+    def write(self, line):
+        """
+        writes file to text.
+        :param line: string which contains an hack command.
+        """
+        self.file.write(line + "\n")
 
 
 if __name__ == '__main__':
