@@ -131,23 +131,59 @@ class CodeWriter:
         :return:
         """
         self.__pop_from_stack()
-        self.__write("@R13")
+        self.__write("@R13")  # save x in R13
         self.__write("M=D")
-        self.__pop_from_stack()
-        self.__write("@R13")
+        self.__pop_from_stack()  # D register holds the y value
+        self.__write("@R13")  # M register holds x value
 
-        if command == "add":  # x+y
-            self.__write("M=M+D")
-        elif command == "sub":  # x-y
-            self.__write("M=M-D")
-        elif command == "eq":
+        if command in ["add", "sub"]:
+            if command == "add":  # x+y
+                self.__write("D=M+D")
+
+            else:  # command has to be "sub
+                self.__write("D=M-D")
+            self.__push_to_stack()
+
+        elif command in ["eq", "gt", "lt"]:
+            # common lines of code:
             self.__write("D=M-D")  # performs x-y
             self.__write("@R1")
-            self.__write("D;JEQ")
-            self.__write("@R0")
-            self.__write("D;JNE")
-            self.__write("D=A")  # A is either 1 or 0 depends on outcome.
-            self.__push_to_stack()  # push boolean result into stack.
+            #  cases:
+            if command == "eq":  # check if x = y
+                self.__write("D;JEQ")
+                self.__write("@R0")
+                self.__write("D;JNE")
+
+            elif command == "gt":  # check if x > y
+                self.__write("D;JGT")  # A will be 1
+                self.__write("@R0")
+                self.__write("D;JLE")  # A will be 0
+
+            else:  # check if x < y because command has to be "lt"
+                self.__write("D;JLT")
+                self.__write("@R0")
+                self.__write("D;JGE")
+
+            self.__write("D=A")  # A is 1 or 0 depends on outcome
+            self.__push_to_stack()
+
+        else:  # command is "and" or "or"
+            if command == "or":
+                self.__write("D=D|M")
+            else:
+                self.__write("D=D&M")
+            self.__push_to_stack()
+
+
+
+
+
+
+
+
+
+
+
 
     def write_push_pop(self, command, segment, index):
         """
