@@ -288,7 +288,11 @@ class VMtranslator:
         self.CW = None
         self.file_path = path
 
-    def parse_file(self):
+    def parse_files(self):
+        """
+
+        :return:
+        """
         if os.path.isdir(self.file_path):
             path = self.file_path
             # .asm file named after folder
@@ -296,9 +300,12 @@ class VMtranslator:
             file_list = [file for file in os.listdir(self.file_path)
                          if ".vm" in file]  # create list of vm files
             for item in file_list:
-                self.translate(item)
+                self.__translate(item)
+        else:
+            self.CW = CodeWriter(self.file_path)  # asm file holds one file
+            self.__translate(self.file_path)
 
-    def translate(self, item):
+    def __translate(self, item):
         """
 
         :return:
@@ -315,4 +322,6 @@ class VMtranslator:
 
 
 if __name__ == '__main__':
-    pass
+    file_path = sys.argv[1]
+    trans = VMtranslator(file_path)
+    trans.parse_files()
