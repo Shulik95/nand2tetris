@@ -106,7 +106,26 @@ class CodeWriter:
         :param command:
         :return:
         """
-        
+        if command == "not" or command == "neg":
+            self.__one_var(command)
+
+    def __one_var(self, command):
+        """
+
+        :param command:
+        :return:
+        """
+        self.__pop_from_stack()
+        if command == "not":
+            self.__write("D=!D")
+        else:
+            self.__write("D=-D")
+        self.__push_to_stack()
+
+    def __two_var(self, command):
+
+            
+
 
     def write_push_pop(self, command, segment, index):
         """
