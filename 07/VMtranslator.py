@@ -106,7 +106,7 @@ class CodeWriter:
         :param command:
         :return:
         """
-        pass
+        
 
     def write_push_pop(self, command, segment, index):
         """
@@ -118,54 +118,75 @@ class CodeWriter:
         """
         if command == "C_PUSH":
             if segment == "constant":
-                self.write("@" + str(index))
-                self.write("D=A")
-                self.push_to_stack()
+                self.__write("@" + str(index))
+                self.__write("D=A")
+                self.__push_to_stack()
             elif segment in ["argument", "local", "this", "that"]:
-                self.write("@" + str(index))  # access address LCL+index
-                self.write("D=A")
-                self.write("@" + self.addr[segment])
-                self.write("D=D+M")
-                self.write("A=D")
-                self.write("D=M")  # *addr
-                self.push_to_stack()  # *addr = *sp
+                self.__get_address(index, segment)
+                self.__write("D=M")  # *addr
+                self.__push_to_stack()  # *addr = *sp
             elif segment == "static":
-                self.write("@" + self.file_name + str(index))
-                self.write("D=M")
-                self.push_to_stack()
+                self.__write("@" + self.file_name + str(index))
+                self.__write("D=M")
+                self.__push_to_stack()
             elif segment == "temp" or segment == "pointer":
-                self.write("@R" + str(self.addr[segment] + index))
-                self.write("D=M")
-                self.push_to_stack()
+                self.__write("@R" + str(self.addr[segment] + index))
+                self.__write("D=M")
+                self.__push_to_stack()
 
         elif command == "C_POP":
-            if segment == 'static':
-                self.pop_from_stack()  # assigns value to D
-                self.write('@' + self.file_name + str(index))
-                self.write('M=D')  #
+            if segment in ["argument", "local", "this", "that"]:
+                self.__get_address(index, segment)
+                self.__write("@R13")
+                self.__write("M=D")
+                self.__pop_from_stack()
+                self.__write("@R13")
+                self.__write("A=M")
+                self.__write("M=D")
+            elif segment == 'static':
+                self.__pop_from_stack()  # assigns value to D
+                self.__write('@' + self.file_name + str(index))
+                self.__write('M=D')
+            elif segment == "temp" or segment == "pointer":
+                self.__pop_from_stack()
+                self.__write("@R" + str(self.addr[segment] + index))
+                self.__write("M=D")
 
-    def push_to_stack(self):
+    def __get_address(self, index, segment):
+        """
+
+        :param index:
+        :param segment:
+        :return:
+        """
+        self.__write("@" + str(index))  # access address LCL+index
+        self.__write("D=A")
+        self.__write("@" + self.addr[segment])
+        self.__write("D=D+M")
+        self.__write("A=D")
+
+    def __push_to_stack(self):
         """
 
         :return:
         """
-        self.write("@SP")
-        self.write("A=M")
-        self.write("M=D")
-        self.write("@SP")
-        self.write("M=M+1")
+        self.__write("@SP")
+        self.__write("A=M")
+        self.__write("M=D")
+        self.__write("@SP")
+        self.__write("M=M+1")
 
-    def pop_from_stack(self):
+    def __pop_from_stack(self):
         """
 
         :return:
         """
-        self.write("@SP")
-        self.write("M=M-1")
-        self.write("A=M")
-        self.write("D=M")
+        self.__write("@SP")
+        self.__write("M=M-1")
+        self.__write("A=M")
+        self.__write("D=M")
 
-    def write(self, line):
+    def __write(self, line):
         """
         writes file to text.
         :param line: string which contains an hack command.
