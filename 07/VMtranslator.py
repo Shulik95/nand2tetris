@@ -108,6 +108,8 @@ class CodeWriter:
         """
         if command == "not" or command == "neg":
             self.__one_var(command)
+        else:
+            self.__two_var(command)
 
     def __one_var(self, command):
         """
@@ -123,9 +125,29 @@ class CodeWriter:
         self.__push_to_stack()
 
     def __two_var(self, command):
+        """
 
-            
+        :param command:
+        :return:
+        """
+        self.__pop_from_stack()
+        self.__write("@R13")
+        self.__write("M=D")
+        self.__pop_from_stack()
+        self.__write("@R13")
 
+        if command == "add":  # x+y
+            self.__write("M=M+D")
+        elif command == "sub":  # x-y
+            self.__write("M=M-D")
+        elif command == "eq":
+            self.__write("D=M-D")  # performs x-y
+            self.__write("@R1")
+            self.__write("D;JEQ")
+            self.__write("@R0")
+            self.__write("D;JNE")
+            self.__write("D=A")  # A is either 1 or 0 depends on outcome.
+            self.__push_to_stack()  # push boolean result into stack.
 
     def write_push_pop(self, command, segment, index):
         """
