@@ -3,13 +3,14 @@ import sys, os
 
 class Parser:
     """
-
+    This class receives a file as input, moves it into a data structure which
+    allows easy line manipulation.
     """
 
     def __init__(self, input_file):
         """
-
-        :param input_file: pu
+        creates a Parser object.
+        :param input_file: the file to parse.
         """
         self.file = open(input_file)
         self.lines = self.file.readlines()
@@ -31,8 +32,8 @@ class Parser:
 
     def has_more_commands(self):
         """
-
-        :return:
+        checks if there are more commands in the input/
+        :return: boolean value.
         """
         if self.line_counter == len(self.lines):  # means were done reading.
             return False
@@ -40,30 +41,41 @@ class Parser:
 
     def advance(self):
         """
-
-        :return:
+        Reads the next command from the input and makes it the next comment.
+        Called only if if has_more_commands is True.
         """
         self.curr_line = self.lines[self.line_counter]
         self.line_counter += 1
 
     def command_type(self):
         """
-
-        :return:
+        Returns the type of the current VM command. C_ARITHMETIC is returned
+        for all the arithmetic commands.
+        :return:command type.
         """
         temp_line = self.__clean_line()
         return self.command_dict[temp_line[0]]
 
     def arg1(self):
+        """
+        returns the first argument of the current command. in the case of
+        C_ARITHMETIC the command itself is returned.
+        """
         return self.__clean_line()[0]
 
     def arg2(self):
+        """
+        returns the second argument of the current command. only called for
+        specific command types.
+        """
         if self.command_dict[self.arg1()] == 'C_PUSH' or (self.command_dict[self.arg1()] == 'C_POP'):
             return self.__clean_line()[2]
 
     def __clean_line(self):
         """
-        :return:
+        This function clears away all white space from the line. white space
+        includes in line comments and comment lines.
+        :return: an array which holds the cleaned values.
         """
         if len(self.curr_line.split()) > 1:
             if not self.has_more_commands():
@@ -82,11 +94,14 @@ class Parser:
 
 
 class CodeWriter:
+    """
+    This class translates the VM commands into hack language.
+    """
 
     def __init__(self, output_file):
         """
-
-        :param output_file:
+        creates a CodeWriter object.
+        :param output_file: file to write into.
         """
         self.file = open(output_file, "w")
         self.addr = {"local": "LCL",
@@ -102,9 +117,9 @@ class CodeWriter:
 
     def write_arithmetic(self, command):
         """
-
-        :param command:
-        :return:
+        Writes the assembly code that is the translation of the given
+        arithmetic command.
+        :param command: str representing a command.
         """
         if command == "not" or command == "neg":
             self.__one_var(command)
@@ -174,24 +189,13 @@ class CodeWriter:
                 self.__write("D=D&M")
             self.__push_to_stack()
 
-
-
-
-
-
-
-
-
-
-
-
     def write_push_pop(self, command, segment, index):
         """
-
-        :param command:
-        :param segment:
-        :param index:
-        :return:
+        Writes the assembly code that is the translation of the given command.
+        the command is either C_PUSH or C_POP.
+        :param command: command as str
+        :param segment: segment to pop/push into/from.
+        :param index: the index of the item in the segment.
         """
         if command == "C_PUSH":
             if segment == "constant":
