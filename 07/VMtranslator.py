@@ -16,7 +16,7 @@ class Parser:
         self.lines = self.file.readlines()
         self.curr_line = None
         self.line_counter = 0
-        self.command_dict = {
+        self.__command_dict = {
             "add": "C_ARITHMETIC",
             "sub": "C_ARITHMETIC",
             "neg": "C_ARITHMETIC",
@@ -54,22 +54,23 @@ class Parser:
         :return:command type.
         """
         temp_line = self.__clean_line()
-        return self.command_dict[temp_line[0]]
+        return self.__command_dict[temp_line[0]]
 
     def arg1(self):
         """
         returns the first argument of the current command. in the case of
         C_ARITHMETIC the command itself is returned.
         """
-        return self.__clean_line()[0]
+        if self.command_type() == "C_ARITHMETIC":
+            return self.__clean_line()[0]  # returns arithmetic command itself
+        return self.__clean_line()[1]  # returns segment for pop/push
 
     def arg2(self):
         """
         returns the second argument of the current command. only called for
         specific command types.
         """
-        if self.command_dict[self.arg1()] == 'C_PUSH' or (self.command_dict[self.arg1()] == 'C_POP'):
-            return self.__clean_line()[2]
+        return self.__clean_line()[2]
 
     def __clean_line(self):
         """
@@ -274,9 +275,44 @@ class CodeWriter:
         """
         self.file.write(line + "\n")
 
+    def close(self):
+        self.file.close()
+
+
+class VMtranslator:
+    """
+    Main class for this program.
+    """
+
+    def __init__(self, path):
+        self.CW = None
+        self.file_path = path
+
+    def parse_file(self):
+        if os.path.isdir(self.file_path):
+            path = self.file_path
+            # .asm file named after folder
+            self.CW = CodeWriter(os.path.basename(os.path.dirname(path)))
+            file_list = [file for file in os.listdir(self.file_path)
+                         if ".vm" in file]  # create list of vm files
+            for item in file_list:
+                self.translate(item)
+
+    def translate(self, item):
+        """
+
+        :return:
+        """
+        temp_parser = Parser(item)  # create parser
+        while temp_parser.has_more_commands():
+            temp_parser.advance()
+            if temp_parser.command_type() == "C_PUSH" or\
+                    temp_parser.command_type() == "C_POP":
+                self.CW.write_push_pop(temp_parser.command_type(),
+                                       temp_parser.arg1(), temp_parser.arg2())
+            else:
+                self.CW.write_arithmetic(temp_parser.arg1())
+
 
 if __name__ == '__main__':
-    temp_P = Parser(sys.argv[1])
-    while temp_P.has_more_commands():
-        temp_P.advance()
-        print(temp_P.arg2())
+    pass
