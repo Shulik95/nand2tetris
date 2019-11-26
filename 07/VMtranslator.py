@@ -13,7 +13,11 @@ class Parser:
         :param input_file: the file to parse.
         """
         self.file = open(input_file)
-        self.lines = self.file.readlines()
+        self.lines = []
+        for line in self.file.readlines():
+            if "/" in line or "\n" == line[0]:  # clear comments and empty lines
+                continue
+            self.lines.append(line)
         self.curr_line = None
         self.line_counter = 0
         self.__command_dict = {
@@ -79,7 +83,7 @@ class Parser:
         :return: an array which holds the cleaned values.
         """
         if len(self.curr_line.split()) > 1:
-            if not self.has_more_commands():
+            if not self.has_more_commands():  # deals with last line
                 return self.curr_line.split(" ")
             return self.curr_line[:-1].split(" ")
         cleaned = ""
@@ -104,7 +108,8 @@ class CodeWriter:
         creates a CodeWriter object.
         :param output_file: file to write into.
         """
-        self.file = open(output_file, "w")
+        self.file = open(output_file + ".asm", "w")
+        self.__restart_SP()
         self.addr = {"local": "LCL",
                      "argument": "ARG",
                      "this": "THIS",
@@ -115,6 +120,12 @@ class CodeWriter:
                      }
 
         self.file_name = output_file[:-2]
+
+    def __restart_SP(self):
+        self.__write("@256")
+        self.__write("D=A")
+        self.__write("@SP")
+        self.__write("M=D")
 
     def write_arithmetic(self, command):
         """
@@ -147,18 +158,18 @@ class CodeWriter:
         :return:
         """
         self.__pop_from_stack()
-        self.__write("@R13")  # save x in R13
-        self.__write("M=D")
-        self.__pop_from_stack()  # D register holds the y value
-        self.__write("@R13")  # M register holds x value
+        self.__write("@SP")
+        self.__write("M=M-1")
+        self.__write("A=M")
 
         if command in ["add", "sub"]:
             if command == "add":  # x+y
-                self.__write("D=M+D")
+                self.__write("M=M+D")
 
             else:  # command has to be "sub
-                self.__write("D=M-D")
-            self.__push_to_stack()
+                self.__write("M=M-D")
+            self.__write("@SP")
+            self.__write("M=M+1")
 
         elif command in ["eq", "gt", "lt"]:
             # common lines of code:
@@ -205,6 +216,7 @@ class CodeWriter:
                 self.__push_to_stack()
             elif segment in ["argument", "local", "this", "that"]:
                 self.__get_address(index, segment)
+                self.__write("A=D+M")
                 self.__write("D=M")  # *addr
                 self.__push_to_stack()  # *addr = *sp
             elif segment == "static":
@@ -212,13 +224,14 @@ class CodeWriter:
                 self.__write("D=M")
                 self.__push_to_stack()
             elif segment == "temp" or segment == "pointer":
-                self.__write("@R" + str(self.addr[segment] + index))
+                self.__write("@R" + str(int(self.addr[segment]) + int(index)))
                 self.__write("D=M")
                 self.__push_to_stack()
 
         elif command == "C_POP":
             if segment in ["argument", "local", "this", "that"]:
                 self.__get_address(index, segment)
+                self.__write("D=D+M")
                 self.__write("@R13")
                 self.__write("M=D")
                 self.__pop_from_stack()
@@ -231,7 +244,7 @@ class CodeWriter:
                 self.__write('M=D')
             elif segment == "temp" or segment == "pointer":
                 self.__pop_from_stack()
-                self.__write("@R" + str(self.addr[segment] + index))
+                self.__write("@R" + str(int(self.addr[segment]) + int(index)))
                 self.__write("M=D")
 
     def __get_address(self, index, segment):
@@ -244,8 +257,8 @@ class CodeWriter:
         self.__write("@" + str(index))  # access address LCL+index
         self.__write("D=A")
         self.__write("@" + self.addr[segment])
-        self.__write("D=D+M")
-        self.__write("A=D")
+
+        # self.__write("A=D")
 
     def __push_to_stack(self):
         """
@@ -296,11 +309,12 @@ class VMtranslator:
         if os.path.isdir(self.file_path):
             path = self.file_path
             # .asm file named after folder
-            self.CW = CodeWriter(os.path.basename(os.path.dirname(path)))
+            name = os.path.basename(path)
+            self.CW = CodeWriter(path + "/" + name)
             file_list = [file for file in os.listdir(self.file_path)
                          if ".vm" in file]  # create list of vm files
             for item in file_list:
-                self.__translate(item)
+                self.__translate(self.file_path + "/" + item)
         else:
             self.CW = CodeWriter(self.file_path)  # asm file holds one file
             self.__translate(self.file_path)
@@ -313,12 +327,13 @@ class VMtranslator:
         temp_parser = Parser(item)  # create parser
         while temp_parser.has_more_commands():
             temp_parser.advance()
-            if temp_parser.command_type() == "C_PUSH" or\
+            if temp_parser.command_type() == "C_PUSH" or \
                     temp_parser.command_type() == "C_POP":
                 self.CW.write_push_pop(temp_parser.command_type(),
                                        temp_parser.arg1(), temp_parser.arg2())
             else:
                 self.CW.write_arithmetic(temp_parser.arg1())
+        self.CW.close()
 
 
 if __name__ == '__main__':
