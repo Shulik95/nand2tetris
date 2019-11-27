@@ -109,7 +109,6 @@ class CodeWriter:
         :param output_file: file to write into.
         """
         self.file = open(output_file + ".asm", "w")
-        self.__restart_SP()
         self.addr = {"local": "LCL",
                      "argument": "ARG",
                      "this": "THIS",
@@ -119,13 +118,8 @@ class CodeWriter:
                      "pointer": 3
                      }
 
-        self.file_name = output_file[:-2]
-
-    def __restart_SP(self):
-        self.__write("@256")
-        self.__write("D=A")
-        self.__write("@SP")
-        self.__write("M=D")
+        self.file_name = output_file.split("/")[-1]
+        self.__counter = 0
 
     def write_arithmetic(self, command):
         """
@@ -146,9 +140,9 @@ class CodeWriter:
         """
         self.__pop_from_stack()
         if command == "not":
-            self.__write("D=!D")
+            self.write("D=!D")
         else:
-            self.__write("D=-D")
+            self.write("D=-D")
         self.__push_to_stack()
 
     def __two_var(self, command):
@@ -158,47 +152,53 @@ class CodeWriter:
         :return:
         """
         self.__pop_from_stack()
-        self.__write("@SP")
-        self.__write("M=M-1")
-        self.__write("A=M")
+        self.write("@SP")
+        self.write("M=M-1")
+        self.write("A=M")
 
         if command in ["add", "sub"]:
             if command == "add":  # x+y
-                self.__write("M=M+D")
+                self.write("M=M+D")
 
             else:  # command has to be "sub
-                self.__write("M=M-D")
-            self.__write("@SP")
-            self.__write("M=M+1")
+                self.write("M=M-D")
+            self.write("@SP")
+            self.write("M=M+1")
 
         elif command in ["eq", "gt", "lt"]:
             # common lines of code:
-            self.__write("D=M-D")  # performs x-y
-            self.__write("@R1")
+            self.write("D=M-D")  # performs x-y
+            self.write(("@JUMP" + self.__counter.__str__()))
+            self.write("M=-1")
             #  cases:
             if command == "eq":  # check if x = y
-                self.__write("D;JEQ")
-                self.__write("@R0")
-                self.__write("D;JNE")
+                self.write("D;JEQ")
 
             elif command == "gt":  # check if x > y
-                self.__write("D;JGT")  # A will be 1
-                self.__write("@R0")
-                self.__write("D;JLE")  # A will be 0
+                self.write("D;JGT")  # A will be 1
 
             else:  # check if x < y because command has to be "lt"
-                self.__write("D;JLT")
-                self.__write("@R0")
-                self.__write("D;JGE")
-
-            self.__write("D=A")  # A is 1 or 0 depends on outcome
+                self.write("D;JLT")
+            # common lines
+            self.write("@NJUMP" + self.__counter.__str__())
+            self.write("M=0")
+            self.write("D=M")
+            self.write("0;JMP")
+            # creates jump label in case command is true:
+            self.write("(JUMP" + self.__counter.__str__() + ")")
+            self.write("D=M")
+            #  creates label for case the command is flase
+            self.write("(NJUMP"+self.__counter.__str__()+")")
+            self.write("D=M")
+            #  D holds either 1 or o, push D to stack now.
             self.__push_to_stack()
+            self.__counter += 1  # advance counter for further use.
 
         else:  # command is "and" or "or"
             if command == "or":
-                self.__write("D=D|M")
+                self.write("D=D|M")
             else:
-                self.__write("D=D&M")
+                self.write("D=D&M")
             self.__push_to_stack()
 
     def write_push_pop(self, command, segment, index):
@@ -211,41 +211,41 @@ class CodeWriter:
         """
         if command == "C_PUSH":
             if segment == "constant":
-                self.__write("@" + str(index))
-                self.__write("D=A")
+                self.write("@" + str(index))
+                self.write("D=A")
                 self.__push_to_stack()
             elif segment in ["argument", "local", "this", "that"]:
                 self.__get_address(index, segment)
-                self.__write("A=D+M")
-                self.__write("D=M")  # *addr
+                self.write("A=D+M")
+                self.write("D=M")  # *addr
                 self.__push_to_stack()  # *addr = *sp
             elif segment == "static":
-                self.__write("@" + self.file_name + str(index))
-                self.__write("D=M")
+                self.write("@" + self.file_name + "." + str(index))
+                self.write("D=M")
                 self.__push_to_stack()
             elif segment == "temp" or segment == "pointer":
-                self.__write("@R" + str(int(self.addr[segment]) + int(index)))
-                self.__write("D=M")
+                self.write("@R" + str(int(self.addr[segment]) + int(index)))
+                self.write("D=M")
                 self.__push_to_stack()
 
         elif command == "C_POP":
             if segment in ["argument", "local", "this", "that"]:
                 self.__get_address(index, segment)
-                self.__write("D=D+M")
-                self.__write("@R13")
-                self.__write("M=D")
+                self.write("D=D+M")
+                self.write("@R13")
+                self.write("M=D")
                 self.__pop_from_stack()
-                self.__write("@R13")
-                self.__write("A=M")
-                self.__write("M=D")
+                self.write("@R13")
+                self.write("A=M")
+                self.write("M=D")
             elif segment == 'static':
                 self.__pop_from_stack()  # assigns value to D
-                self.__write('@' + self.file_name + str(index))
-                self.__write('M=D')
+                self.write('@' + self.file_name + "." + str(index))
+                self.write('M=D')
             elif segment == "temp" or segment == "pointer":
                 self.__pop_from_stack()
-                self.__write("@R" + str(int(self.addr[segment]) + int(index)))
-                self.__write("M=D")
+                self.write("@R" + str(int(self.addr[segment]) + int(index)))
+                self.write("M=D")
 
     def __get_address(self, index, segment):
         """
@@ -254,9 +254,9 @@ class CodeWriter:
         :param segment:
         :return:
         """
-        self.__write("@" + str(index))  # access address LCL+index
-        self.__write("D=A")
-        self.__write("@" + self.addr[segment])
+        self.write("@" + str(index))  # access address LCL+index
+        self.write("D=A")
+        self.write("@" + self.addr[segment])
 
         # self.__write("A=D")
 
@@ -265,23 +265,23 @@ class CodeWriter:
 
         :return:
         """
-        self.__write("@SP")
-        self.__write("A=M")
-        self.__write("M=D")
-        self.__write("@SP")
-        self.__write("M=M+1")
+        self.write("@SP")
+        self.write("A=M")
+        self.write("M=D")
+        self.write("@SP")
+        self.write("M=M+1")
 
     def __pop_from_stack(self):
         """
 
         :return:
         """
-        self.__write("@SP")
-        self.__write("M=M-1")
-        self.__write("A=M")
-        self.__write("D=M")
+        self.write("@SP")
+        self.write("M=M-1")
+        self.write("A=M")
+        self.write("D=M")
 
-    def __write(self, line):
+    def write(self, line):
         """
         writes file to text.
         :param line: string which contains an hack command.
@@ -329,9 +329,12 @@ class VMtranslator:
             temp_parser.advance()
             if temp_parser.command_type() == "C_PUSH" or \
                     temp_parser.command_type() == "C_POP":
+                self.CW.write(
+                    "// writing:" + temp_parser.command_type() + " " + temp_parser.arg1() + " " + temp_parser.arg2())
                 self.CW.write_push_pop(temp_parser.command_type(),
                                        temp_parser.arg1(), temp_parser.arg2())
             else:
+                self.CW.write("// writing arithmetic: " + temp_parser.arg1())
                 self.CW.write_arithmetic(temp_parser.arg1())
         self.CW.close()
 
