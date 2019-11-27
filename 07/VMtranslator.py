@@ -109,7 +109,8 @@ class CodeWriter:
         creates a CodeWriter object.
         :param output_file: file to write into.
         """
-        self.file = open(output_file + ".asm", "w")
+        edited_name = output_file.replace(".vm", ".asm")
+        self.file = open(edited_name, "w")
         self.addr = {"local": "LCL",
                      "argument": "ARG",
                      "this": "THIS",
