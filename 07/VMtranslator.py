@@ -182,13 +182,11 @@ class CodeWriter:
             # common lines
             self.write("@NJUMP" + self.__counter.__str__())
             self.write("M=0")
-            self.write("D=M")
             self.write("0;JMP")
             # creates jump label in case command is true:
             self.write("(JUMP" + self.__counter.__str__() + ")")
-            self.write("D=M")
-            #  creates label for case the command is flase
-            self.write("(NJUMP"+self.__counter.__str__()+")")
+            # creates label for case the command is false
+            self.write("(NJUMP" + self.__counter.__str__() + ")")
             self.write("D=M")
             #  D holds either 1 or o, push D to stack now.
             self.__push_to_stack()
