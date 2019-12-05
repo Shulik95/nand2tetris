@@ -266,14 +266,23 @@ class CodeWriter:
 
     def write_ifgoto(self, ifgoto):
         """
-
         """
         self.write('@SP')
-        self.write('D=M')  # D=0(F) or D=-1(T)
-        self.write_goto(ifgoto[:-1])
-        self.write('D,JLT')  # i.e D<0 or D<-1(which is invalid)
-        # -> D=-1 -> D= TRUE -> needs to jump
-        self.write('('+ifgoto[:-1]+')')
+        self.write('A=M-1')
+        self.write('D=M')
+        self.write('@SP')
+        self.write('M=M-1')
+        self.write_goto(ifgoto)
+        self.write('D;JNE')
+
+    def write_function(self):
+        pass
+
+    def write_call(self):
+        pass
+
+    def write_return(self):
+        pass
 
     def __get_address(self, index, segment):
         """
