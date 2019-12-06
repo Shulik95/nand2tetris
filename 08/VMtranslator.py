@@ -259,7 +259,8 @@ class CodeWriter:
                 self.write("M=D")
 
     def write_label(self, label):
-        self.write('(' + label + ')')
+        my_str = '('+ label[:-1] + ')\n'
+        self.write(my_str)
 
     def write_goto(self, goto):
         self.write('@' + goto)
