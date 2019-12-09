@@ -259,11 +259,15 @@ class CodeWriter:
                 self.write("M=D")
 
     def write_label(self, label):
-        my_str = '('+ label[:-1] + ')\n'
+        if label[-1] == '\n':
+            my_str= '('+label[:-1]+')'
+        else:
+            my_str = '('+label+')'
         self.write(my_str)
 
     def write_goto(self, goto):
         self.write('@' + goto)
+        self.write('0;JMP')
 
     def write_ifgoto(self, ifgoto):
         """
@@ -273,13 +277,13 @@ class CodeWriter:
         self.write('D=M')
         self.write('@SP')
         self.write('M=M-1')
-        self.write_goto(ifgoto)
+        self.write('@'+ifgoto)
         self.write('D;JNE')
 
-    def write_function(self):
+    def write_function(self,name,nvars):
         pass
 
-    def write_call(self):
+    def write_call(self,name,nvars):
         pass
 
     def write_return(self):

@@ -1,7 +1,7 @@
 // writing label: SOMETHING
-(SOMETHIN)
-
+(SOMETHING)
 // writing label: dog
-
 (dog)
+// writing label: day
 
+(day)

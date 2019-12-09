@@ -105,8 +105,7 @@ D=M
 A=M
 M=D
 // writing label: MAIN_LOOP_START
-(MAIN_LOOP_STAR)
-
+(MAIN_LOOP_START)
 // writing:C_PUSH argument 0
 @0
 D=A
@@ -128,9 +127,9 @@ M=M-1
 D;JNE
 // writing goto: END_PROGRAM
 @END_PROGRAM
+0;JMP
 // writing label: COMPUTE_ELEMENT
-(COMPUTE_ELEMEN)
-
+(COMPUTE_ELEMENT)
 // writing:C_PUSH that 0
 @0
 D=A
@@ -258,7 +257,7 @@ A=M
 M=D
 // writing goto: MAIN_LOOP_START
 @MAIN_LOOP_START
+0;JMP
 // writing label: END_PROGRAM
 
 (END_PROGRAM)
-
