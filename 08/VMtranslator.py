@@ -136,6 +136,13 @@ class CodeWriter:
         self.__acounter = 0
         self.__ccounter = 0
         self.isfunc = False
+        self.__currfile = None
+
+    def set_filename(self,filename):
+        """
+        setting current file name to a certain filename within a folder
+        """
+        self.__currfile = filename
 
     def write_arithmetic(self, command):
         """
@@ -269,7 +276,12 @@ class CodeWriter:
                 my_str = '(' + label + ')'
             self.write(my_str)
         else:
-            pass
+            if label[-1] == '\n':
+                my_str = '(' + self.__currfile+'.'+label[:-1] + ')'
+            else:
+                my_str = '(' + label + ')'
+            self.write(my_str)
+
 
     def write_goto(self, goto):
         self.write('@' + goto)
@@ -399,6 +411,7 @@ class VMtranslator:
         translates a given file from vm to hack code.
         """
         temp_parser = Parser(item)  # create parser
+        self.CW.set_filename(item[:-3])
         while temp_parser.has_more_commands():
             temp_parser.advance()  # get next command
             if temp_parser.command_type() == "C_PUSH" or \
