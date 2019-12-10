@@ -58,7 +58,7 @@ class Parser:
         for all the arithmetic commands.
         :return:command type.
         """
-        temp_line = self.__clean_line()
+        temp_line = self.clean_line()
         return self.__command_dict[temp_line[0]]
 
     def arg1(self):
@@ -67,17 +67,17 @@ class Parser:
         C_ARITHMETIC the command itself is returned.
         """
         if self.command_type() == "C_ARITHMETIC":
-            return self.__clean_line()[0]  # returns arithmetic command itself
-        return self.__clean_line()[1]  # returns segment for pop/push
+            return self.clean_line()[0]  # returns arithmetic command itself
+        return self.clean_line()[1]  # returns segment for pop/push
 
     def arg2(self):
         """
         returns the second argument of the current command. only called for
         specific command types.
         """
-        return self.__clean_line()[2]
+        return self.clean_line()[2]
 
-    def __clean_line(self):
+    def clean_line(self):
         """
         This function clears away all white space from the line. white space
         includes in line comments and comment lines.
@@ -336,8 +336,9 @@ class VMtranslator:
                 self.CW.write_arithmetic(temp_parser.arg1())
 
 
-
 if __name__ == '__main__':
     file_path = sys.argv[1]
-    translator = VMtranslator(file_path)
-    translator.parse_files()
+    # translator = VMtranslator(file_path)
+    # translator.parse_files()
+    par =Parser(file_path)
+    par.clean_line()

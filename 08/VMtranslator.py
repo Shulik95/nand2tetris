@@ -16,7 +16,7 @@ class Parser:
         self.file = open(input_file)
         self.lines = []
         for line in self.file.readlines():
-            if "/" == line[0] or "\n" == line[0]: #clear comments & empty lines
+            if "/" == line[0] or "\n" == line[0]:  # clear comments & empty lines
                 continue
             line = line.split('//')[0]
 
@@ -259,13 +259,24 @@ class CodeWriter:
                 self.write("M=D")
 
     def write_label(self, label):
+        """
+
+        :param label:
+        :return:
+        """
+
         if label[-1] == '\n':
-            my_str= '('+label[:-1]+')'
+            my_str = '(' + label[:-1] + ')'
         else:
-            my_str = '('+label+')'
+            my_str = '(' + label + ')'
         self.write(my_str)
 
     def write_goto(self, goto):
+        """
+
+        :param goto:
+        :return:
+        """
         self.write('@' + goto)
         self.write('0;JMP')
 
@@ -277,13 +288,13 @@ class CodeWriter:
         self.write('D=M')
         self.write('@SP')
         self.write('M=M-1')
-        self.write('@'+ifgoto)
+        self.write('@' + ifgoto)
         self.write('D;JNE')
 
-    def write_function(self,name,nvars):
+    def write_function(self, name, nvars):
         pass
 
-    def write_call(self,name,nvars):
+    def write_call(self, name, nvars):
         pass
 
     def write_return(self):
@@ -347,7 +358,8 @@ class VMtranslator:
         """
         if os.path.isdir(self.file_path):
             path = self.file_path
-            name = os.path.basename(path)+'.asm'
+            print(path)
+            name = os.path.basename(path) + '.asm'
             # .asm file named after folder
             self.CW = CodeWriter(path + "/" + name)
             file_list = [file for file in os.listdir(self.file_path)
@@ -364,6 +376,7 @@ class VMtranslator:
         translates a given file from vm to hack code.
         """
         temp_parser = Parser(item)  # create parser
+
         while temp_parser.has_more_commands():
             temp_parser.advance()  # get next command
             if temp_parser.command_type() == "C_PUSH" or \
