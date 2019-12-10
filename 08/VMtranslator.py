@@ -309,7 +309,7 @@ class CodeWriter:
         if self.funcname != '':
             self.write(
                 '@' + self.file_name + '.' + self.funcname + '$' + ifgoto)
-        else:  # inside func
+        else:
             self.write('@' + ifgoto)
         self.write('D;JNE')
 
@@ -347,7 +347,7 @@ class CodeWriter:
         self.write('D=D+A')
         self.write('@SP')
         self.write('D=M-D')
-        self.write('@ARGS')
+        self.write('@ARG')
         self.write('M=D')
 
         self.write('@SP')  # LCL=SP
@@ -357,7 +357,7 @@ class CodeWriter:
 
         self.write_goto(fname)  # goto fname
 
-        self.write_label('@RETURN' + str(self.__ccounter))  # declare label
+        self.write_label('RETURN' + str(self.__ccounter))  # declare label
 
     def __increase_R15(self, item):
         """
@@ -521,6 +521,9 @@ class VMtranslator:
                 self.CW.write("// writing return: " + temp_parser.arg1())
                 self.CW.write_return()
                 self.CW.funcname = ''
+            elif temp_parser.command_type() == "C_CALL":
+                self.CW.write("//writing call: "+temp_parser.arg1())
+                self.CW.write_call(temp_parser.arg1(), temp_parser.arg2())
 
 
 if __name__ == '__main__':
