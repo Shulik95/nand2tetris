@@ -359,11 +359,10 @@ class CodeWriter:
 
         self.write_label('@RETURN' + str(self.__ccounter))  # declare label
 
-    def increase_R15(self, item):
+    def __increase_R15(self, item):
         """
-
-        :param item:
-        :return:
+        An helper method which returns values to pre-function call state.
+        :param item: value to return.
         """
         self.write('@R15')
         self.write('M=M+1')
@@ -377,48 +376,40 @@ class CodeWriter:
 
         :return:
         """
-        self.write('//endframe = LCL')
-        self.write('@LCL')
+
+        self.write('@LCL')  # endframe = LCL
         self.write('D=M')
         self.write('@ENDFRAME' + str(self.__ccounter))
         self.write('M=D')
 
-        self.write('// retaddr = *(endframe-5)')
-        self.write('@5')
+        self.write('@5')  # retaddr = *(endframe-5)'
         self.write('D=D-A')
 
-        self.write('//saving endframe-5 in R15')
-        self.write('@R15')
+        self.write('@R15')  # saving endframe-5 in R15
         self.write('M=D')
 
-        self.write('// continue retaddr = *(endframe-5)')
         self.write('A=D')
         self.write('D=M')
         self.write('@RETURN' + str(self.__ccounter))
         self.write('M=D')
 
-        self.write('// *ARG = pop()')
-        self.__pop_from_stack()
+        self.__pop_from_stack()  # *ARG = pop()
         self.write('@ARG')
         self.write('A=M')
         self.write('M=D')
 
-        self.write('//sp = arg + 1')
-        self.write('@ARG')
+        self.write('@ARG')  # sp = arg + 1
         self.write('D=M')
         self.write('@SP')
         self.write('M=D+1')
 
-        self.write('//LCL = *(endframe-4)')
-        self.increase_R15('LCL')
-        self.write('//ARG = *(endframe-3)')
-        self.increase_R15('ARG')
-        self.write('//This = *(endframe-2)')
-        self.increase_R15('THIS')
-        self.write('//That = *(endframe-1)')
-        self.increase_R15('THAT')
+        #  return all proper values to previous state
+        self.__increase_R15('LCL')
+        self.__increase_R15('ARG')
+        self.__increase_R15('THIS')
+        self.__increase_R15('THAT')
 
-        self.write('//writing reutrn go-to')
+        # writing final go-to
         self.write('@RETURN' + str(self.__ccounter))
         self.write('A=M')
         self.write('0;JMP')

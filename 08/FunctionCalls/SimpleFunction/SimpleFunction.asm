@@ -103,62 +103,53 @@ M=M-D
 @SP
 M=M+1
 // writing return: return
-//endframe = LCL
 @LCL
 D=M
 @ENDFRAME0
 M=D
-// retaddr = *(endframe-5)
 @5
 D=D-A
-//saving endframe-5 in R15
 @R15
 M=D
-// continue retaddr = *(endframe-5)
 A=D
 D=M
 @RETURN0
 M=D
-// *ARG = pop()
 @SP
 M=M-1
 A=M
 D=M
 @ARG
+A=M
 M=D
-//sp = arg + 1
+@ARG
 D=M
 @SP
 M=D+1
-//LCL = *(endframe-4)
 @R15
 M=M+1
 A=M
 D=M
 @LCL
 M=D
-//ARG = *(endframe-3)
 @R15
 M=M+1
 A=M
 D=M
 @ARG
 M=D
-//This = *(endframe-2)
 @R15
 M=M+1
 A=M
 D=M
 @THIS
 M=D
-//That = *(endframe-1)
 @R15
 M=M+1
 A=M
 D=M
 @THAT
 M=D
-//writing reutrn go-to
 @RETURN0
 A=M
 0;JMP
