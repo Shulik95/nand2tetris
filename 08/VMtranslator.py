@@ -16,11 +16,9 @@ class Parser:
         self.file = open(input_file)
         self.lines = []
         for line in self.file.readlines():
-            if "/" == line[0] or "\n" == line[
-                0]:  # clear comments & empty lines
+            if "/" == line[0] or "\n" == line[0]:  # clear comments & empty lines
                 continue
             line = line.split('//')[0]
-
             self.lines.append(line)
         self.curr_line = None
         self.line_counter = 0
@@ -138,7 +136,7 @@ class CodeWriter:
         self.isfunc = False
         self.__currfile = None
 
-    def set_filename(self,filename):
+    def set_filename(self, filename):
         """
         setting current file name to a certain filename within a folder
         """
@@ -277,11 +275,10 @@ class CodeWriter:
             self.write(my_str)
         else:
             if label[-1] == '\n':
-                my_str = '(' + self.__currfile+'.'+label[:-1] + ')'
+                my_str = '(' + self.__currfile + '.' + label[:-1] + ')'
             else:
                 my_str = '(' + label + ')'
             self.write(my_str)
-
 
     def write_goto(self, goto):
         self.write('@' + goto)
