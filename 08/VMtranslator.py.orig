@@ -279,9 +279,14 @@ class CodeWriter:
             else:
                 my_str = '(' + label + ')'
             self.write(my_str)
-        else:  # inside a function
+        else:  ## inside a function
             if label[-1] == '\n':
-                my_str = '(' + self.file_name + '.' + self.funcname + '$' + label[:-1] + ')'
+<<<<<<< HEAD
+                my_str = '(' + self.__currfile + '.' + label[:-1] + ')'
+=======
+                my_str = '(' + self.file_name + '.' + self.funcname + '$' + label[
+                                                                            :-1] + ')'
+>>>>>>> 87b5216327cc6ab95f05d9d742504fd8ef464442
             else:
                 my_str = '(' + self.file_name + '.' + self.funcname + '$' + label + ')'
             self.write(my_str)
