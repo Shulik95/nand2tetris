@@ -16,7 +16,8 @@ class Parser:
         self.file = open(input_file)
         self.lines = []
         for line in self.file.readlines():
-            if "/" == line[0] or "\n" == line[0]:  # clear comments & empty lines
+            if "/" == line[0] or "\n" == line[
+                0]:  # clear comments & empty lines
                 continue
             line = line.split('//')[0]
 
@@ -132,7 +133,16 @@ class CodeWriter:
                      }
 
         self.file_name = output_file.split("/")[-1]
-        self.__counter = 0
+        self.__acounter = 0
+        self.__ccounter = 0
+        self.isfunc = False
+        self.__currfile = None
+
+    def set_filename(self,filename):
+        """
+        setting current file name to a certain filename within a folder
+        """
+        self.__currfile = filename
 
     def write_arithmetic(self, command):
         """
@@ -181,7 +191,7 @@ class CodeWriter:
         elif command in ["eq", "gt", "lt"]:
             # common lines of code:
             self.write("D=M-D")  # performs x-y
-            self.write(("@JUMP" + self.__counter.__str__()))
+            self.write(("@JUMP" + self.__acounter.__str__()))
             self.write("M=-1")
             #  cases:
             if command == "eq":  # check if x = y
@@ -193,17 +203,17 @@ class CodeWriter:
             else:  # check if x < y because command has to be "lt"
                 self.write("D;JLT")
             # common lines
-            self.write("@NJUMP" + self.__counter.__str__())
+            self.write("@NJUMP" + self.__acounter.__str__())
             self.write("M=0")
             self.write("0;JMP")
             # creates jump label in case command is true:
-            self.write("(JUMP" + self.__counter.__str__() + ")")
+            self.write("(JUMP" + self.__acounter.__str__() + ")")
             # creates label for case the command is false
-            self.write("(NJUMP" + self.__counter.__str__() + ")")
+            self.write("(NJUMP" + self.__acounter.__str__() + ")")
             self.write("D=M")
             #  D holds either 1 or 0, push D to stack now.
             self.__push_to_stack()
-            self.__counter += 1  # advance counter for further use.
+            self.__acounter += 1  # advance counter for further use.
 
         else:  # command is "and" or "or"
             if command == "or":
@@ -259,24 +269,21 @@ class CodeWriter:
                 self.write("M=D")
 
     def write_label(self, label):
-        """
-
-        :param label:
-        :return:
-        """
-
-        if label[-1] == '\n':
-            my_str = '(' + label[:-1] + ')'
+        if not self.isfunc:
+            if label[-1] == '\n':
+                my_str = '(' + label[:-1] + ')'
+            else:
+                my_str = '(' + label + ')'
+            self.write(my_str)
         else:
-            my_str = '(' + label + ')'
-        self.write(my_str)
+            if label[-1] == '\n':
+                my_str = '(' + self.__currfile+'.'+label[:-1] + ')'
+            else:
+                my_str = '(' + label + ')'
+            self.write(my_str)
+
 
     def write_goto(self, goto):
-        """
-
-        :param goto:
-        :return:
-        """
         self.write('@' + goto)
         self.write('0;JMP')
 
@@ -291,11 +298,40 @@ class CodeWriter:
         self.write('@' + ifgoto)
         self.write('D;JNE')
 
-    def write_function(self, name, nvars):
-        pass
+    def write_function(self, fname, nargs):
+        self.write_label(fname)
+        for i in range(nargs):
+            self.write('@R0')
+            self.write('D=A')
+            self.__push_to_stack()
 
-    def write_call(self, name, nvars):
-        pass
+    def write_call(self, fname, nargs):
+        self.write('@RETURN' + str(self.__ccounter))  # push return address
+        self.write('D=A')
+        self.__push_to_stack()
+        for item in ['@LCL', '@ARG', '@THIS', '@THAT']:
+            self.write(item)
+            self.write("D=M")
+            self.__push_to_stack()
+
+        self.write('@5')  # arg=sp-5-nargs
+        self.write('D=A')
+        self.write('@' + str(nargs))
+        self.write('D=D+A')
+        self.write('@SP')
+        self.write('D=M-D')
+        self.write('@ARGS')
+        self.write('M=D')
+
+        self.write('@SP')  # LCL=SP
+        self.write('D=M')
+        self.write('@LCL')
+        self.write('M=D')
+
+        self.write_goto(fname)  # goto fname
+
+        self.write_label('@RETURN' + str(self.__ccounter))  # declare label
+        self.__ccounter += 1
 
     def write_return(self):
         pass
@@ -358,7 +394,6 @@ class VMtranslator:
         """
         if os.path.isdir(self.file_path):
             path = self.file_path
-            print(path)
             name = os.path.basename(path) + '.asm'
             # .asm file named after folder
             self.CW = CodeWriter(path + "/" + name)
@@ -376,7 +411,7 @@ class VMtranslator:
         translates a given file from vm to hack code.
         """
         temp_parser = Parser(item)  # create parser
-
+        self.CW.set_filename(item[:-3])
         while temp_parser.has_more_commands():
             temp_parser.advance()  # get next command
             if temp_parser.command_type() == "C_PUSH" or \
