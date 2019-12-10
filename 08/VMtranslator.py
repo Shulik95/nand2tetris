@@ -16,11 +16,9 @@ class Parser:
         self.file = open(input_file)
         self.lines = []
         for line in self.file.readlines():
-            if "/" == line[0] or "\n" == line[
-                0]:  # clear comments & empty lines
+            if "/" == line[0] or "\n" == line[0]:  # clear comments & empty lines
                 continue
             line = line.split('//')[0]
-
             self.lines.append(line)
         self.curr_line = None
         self.line_counter = 0
@@ -270,21 +268,30 @@ class CodeWriter:
                 self.write("M=D")
 
     def write_label(self, label):
+        """
+
+        :param label:
+        :return:
+        """
         if self.funcname == '':  # not inside a function
             if label[-1] == '\n':
                 my_str = '(' + label[:-1] + ')'
             else:
                 my_str = '(' + label + ')'
             self.write(my_str)
-        else:  ## inside a function
+        else:  # inside a function
             if label[-1] == '\n':
-                my_str = '(' + self.file_name + '.' + self.funcname + '$' + label[
-                                                                            :-1] + ')'
+                my_str = '(' + self.file_name + '.' + self.funcname + '$' + label[:-1] + ')'
             else:
                 my_str = '(' + self.file_name + '.' + self.funcname + '$' + label + ')'
             self.write(my_str)
 
     def write_goto(self, goto):
+        """
+
+        :param goto:
+        :return:
+        """
         if self.funcname != '':  # inside func
             self.write('@' + self.file_name + '.' + self.funcname + '$' + goto)
         else:
@@ -307,13 +314,25 @@ class CodeWriter:
         self.write('D;JNE')
 
     def write_function(self, fname, num_of_args):
-        self.write('('+self.file_name + '.' + fname+')')
+        """
+
+        :param fname:
+        :param num_of_args:
+        :return:
+        """
+        self.write('(' + self.file_name + '.' + fname + ')')
         for i in range(int(num_of_args)):
             self.write('@R0')
             self.write('D=A')
             self.__push_to_stack()
 
     def write_call(self, fname, nargs):
+        """
+
+        :param fname:
+        :param nargs:
+        :return:
+        """
         self.write('@RETURN' + str(self.__ccounter))  # push return address
         self.write('D=A')
         self.__push_to_stack()
@@ -340,7 +359,11 @@ class CodeWriter:
 
         self.write_label('@RETURN' + str(self.__ccounter))  # declare label
 
-    def increase_R15(self, item):
+    def __increase_R15(self, item):
+        """
+        An helper method which returns values to pre-function call state.
+        :param item: value to return.
+        """
         self.write('@R15')
         self.write('M=M+1')
         self.write('A=M')
@@ -349,47 +372,44 @@ class CodeWriter:
         self.write('M=D')
 
     def write_return(self):
-        self.write('//endframe = LCL')
-        self.write('@LCL')
+        """
+
+        :return:
+        """
+
+        self.write('@LCL')  # endframe = LCL
         self.write('D=M')
         self.write('@ENDFRAME' + str(self.__ccounter))
         self.write('M=D')
 
-        self.write('// retaddr = *(endframe-5)')
-        self.write('@5')
+        self.write('@5')  # retaddr = *(endframe-5)'
         self.write('D=D-A')
 
-        self.write('//saving endframe-5 in R15')
-        self.write('@R15')
+        self.write('@R15')  # saving endframe-5 in R15
         self.write('M=D')
 
-        self.write('// continue retaddr = *(endframe-5)')
         self.write('A=D')
         self.write('D=M')
         self.write('@RETURN' + str(self.__ccounter))
         self.write('M=D')
 
-
-        self.write('// *ARG = pop()')
-        self.__pop_from_stack()
+        self.__pop_from_stack()  # *ARG = pop()
         self.write('@ARG')
+        self.write('A=M')
         self.write('M=D')
 
-        self.write('//sp = arg + 1')
+        self.write('@ARG')  # sp = arg + 1
         self.write('D=M')
         self.write('@SP')
         self.write('M=D+1')
 
-        self.write('//LCL = *(endframe-4)')
-        self.increase_R15('LCL')
-        self.write('//ARG = *(endframe-3)')
-        self.increase_R15('ARG')
-        self.write('//This = *(endframe-2)')
-        self.increase_R15('THIS')
-        self.write('//That = *(endframe-1)')
-        self.increase_R15('THAT')
+        #  return all proper values to previous state
+        self.__increase_R15('LCL')
+        self.__increase_R15('ARG')
+        self.__increase_R15('THIS')
+        self.__increase_R15('THAT')
 
-        self.write('//writing reutrn go-to')
+        # writing final go-to
         self.write('@RETURN' + str(self.__ccounter))
         self.write('A=M')
         self.write('0;JMP')
@@ -501,6 +521,7 @@ class VMtranslator:
                 self.CW.write("// writing return: " + temp_parser.arg1())
                 self.CW.write_return()
                 self.CW.funcname = ''
+
 
 if __name__ == '__main__':
     file_path = sys.argv[1]
