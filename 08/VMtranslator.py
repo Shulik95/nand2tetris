@@ -16,8 +16,7 @@ class Parser:
         self.file = open(input_file)
         self.lines = []
         for line in self.file.readlines():
-            if "/" == line[0] or "\n" == line[
-                0]:  # clear comments & empty lines
+            if "/" == line[0] or "\n" == line[0]:  # clear comments & empty lines
                 continue
             line = line.split('//')[0]
 
@@ -270,6 +269,11 @@ class CodeWriter:
                 self.write("M=D")
 
     def write_label(self, label):
+        """
+
+        :param label:
+        :return:
+        """
         if self.funcname == '':  # not inside a function
             if label[-1] == '\n':
                 my_str = '(' + label[:-1] + ')'
@@ -285,6 +289,11 @@ class CodeWriter:
             self.write(my_str)
 
     def write_goto(self, goto):
+        """
+
+        :param goto:
+        :return:
+        """
         if self.funcname != '':  # inside func
             self.write('@' + self.file_name + '.' + self.funcname + '$' + goto)
         else:
@@ -307,13 +316,25 @@ class CodeWriter:
         self.write('D;JNE')
 
     def write_function(self, fname, num_of_args):
-        self.write('('+self.file_name + '.' + fname+')')
+        """
+
+        :param fname:
+        :param num_of_args:
+        :return:
+        """
+        self.write('(' + self.file_name + '.' + fname + ')')
         for i in range(int(num_of_args)):
             self.write('@R0')
             self.write('D=A')
             self.__push_to_stack()
 
     def write_call(self, fname, nargs):
+        """
+
+        :param fname:
+        :param nargs:
+        :return:
+        """
         self.write('@RETURN' + str(self.__ccounter))  # push return address
         self.write('D=A')
         self.__push_to_stack()
@@ -341,6 +362,11 @@ class CodeWriter:
         self.write_label('@RETURN' + str(self.__ccounter))  # declare label
 
     def increase_R15(self, item):
+        """
+
+        :param item:
+        :return:
+        """
         self.write('@R15')
         self.write('M=M+1')
         self.write('A=M')
@@ -349,6 +375,10 @@ class CodeWriter:
         self.write('M=D')
 
     def write_return(self):
+        """
+
+        :return:
+        """
         self.write('//endframe = LCL')
         self.write('@LCL')
         self.write('D=M')
@@ -369,13 +399,14 @@ class CodeWriter:
         self.write('@RETURN' + str(self.__ccounter))
         self.write('M=D')
 
-
         self.write('// *ARG = pop()')
         self.__pop_from_stack()
         self.write('@ARG')
+        self.write('A=M')
         self.write('M=D')
 
         self.write('//sp = arg + 1')
+        self.write('@ARG')
         self.write('D=M')
         self.write('@SP')
         self.write('M=D+1')
@@ -501,6 +532,7 @@ class VMtranslator:
                 self.CW.write("// writing return: " + temp_parser.arg1())
                 self.CW.write_return()
                 self.CW.funcname = ''
+
 
 if __name__ == '__main__':
     file_path = sys.argv[1]
