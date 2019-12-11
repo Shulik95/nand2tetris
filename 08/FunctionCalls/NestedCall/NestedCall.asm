@@ -31,7 +31,7 @@ D=M
 @R4
 M=D
 //writing call: Sys.main
-@RETURN1
+@NestedCall.Sys.main$RETURN1
 D=A
 @SP
 A=M
@@ -68,8 +68,6 @@ M=D
 M=M+1
 @5
 D=A
-@0
-D=D+A
 @SP
 D=M-D
 @ARG
@@ -78,7 +76,7 @@ M=D
 D=M
 @LCL
 M=D
-@NestedCall.Sys.main$Sys.main
+@NestedCall.Sys.main
 0;JMP
 (NestedCall.Sys.main$RETURN1)
 // writing:C_POP temp 1
@@ -235,7 +233,7 @@ M=D
 @SP
 M=M+1
 //writing call: Sys.add12
-@RETURN2
+@NestedCall.Sys.add12$RETURN2
 D=A
 @SP
 A=M
@@ -270,10 +268,8 @@ A=M
 M=D
 @SP
 M=M+1
-@5
+@6
 D=A
-@1
-D=D+A
 @SP
 D=M-D
 @ARG
@@ -282,7 +278,7 @@ M=D
 D=M
 @LCL
 M=D
-@NestedCall.Sys.add12$Sys.add12
+@NestedCall.Sys.add12
 0;JMP
 (NestedCall.Sys.add12$RETURN2)
 // writing:C_POP temp 0
@@ -400,9 +396,6 @@ M=D
 //#  # retaddr = *(endframe-5)
 @5
 D=D-A
-// # saving endframe-5 in R15
-@R15
-M=D
 A=D
 D=M
 @RETURN2
@@ -426,29 +419,37 @@ M=D
 D=M
 @SP
 M=D+1
-@R15
-M=M+1
-A=M
+@ENDFRAME2
 D=M
-@LCL
-M=D
-@R15
-M=M+1
-A=M
+@1
+D=D-A
+A=D
 D=M
-@ARG
+@THAT
 M=D
-@R15
-M=M+1
-A=M
+@ENDFRAME2
+D=M
+@2
+D=D-A
+A=D
 D=M
 @THIS
 M=D
-@R15
-M=M+1
-A=M
+@ENDFRAME2
 D=M
-@THAT
+@3
+D=D-A
+A=D
+D=M
+@ARG
+M=D
+@ENDFRAME2
+D=M
+@4
+D=D-A
+A=D
+D=M
+@LCL
 M=D
 @RETURN2
 A=M
@@ -524,9 +525,6 @@ M=D
 //#  # retaddr = *(endframe-5)
 @5
 D=D-A
-// # saving endframe-5 in R15
-@R15
-M=D
 A=D
 D=M
 @RETURN2
@@ -550,29 +548,37 @@ M=D
 D=M
 @SP
 M=D+1
-@R15
-M=M+1
-A=M
+@ENDFRAME2
 D=M
-@LCL
-M=D
-@R15
-M=M+1
-A=M
+@1
+D=D-A
+A=D
 D=M
-@ARG
+@THAT
 M=D
-@R15
-M=M+1
-A=M
+@ENDFRAME2
+D=M
+@2
+D=D-A
+A=D
 D=M
 @THIS
 M=D
-@R15
-M=M+1
-A=M
+@ENDFRAME2
 D=M
-@THAT
+@3
+D=D-A
+A=D
+D=M
+@ARG
+M=D
+@ENDFRAME2
+D=M
+@4
+D=D-A
+A=D
+D=M
+@LCL
 M=D
 @RETURN2
 A=M
