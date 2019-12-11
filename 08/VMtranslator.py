@@ -240,7 +240,7 @@ class CodeWriter:
                 self.write("D=M")  # *addr
                 self.__push_to_stack()  # *addr = *sp
             elif segment == "static":
-                self.write("@" + self.file_name + "." + str(index))
+                self.write("@" + self.__currfile + "." + str(index))
                 self.write("D=M")
                 self.__push_to_stack()
             elif segment == "temp" or segment == "pointer":
@@ -260,7 +260,7 @@ class CodeWriter:
                 self.write("M=D")
             elif segment == 'static':
                 self.__pop_from_stack()  # assigns value to D
-                self.write('@' + self.file_name + "." + str(index))
+                self.write('@' + self.__currfile + "." + str(index))
                 self.write('M=D')
             elif segment == "temp" or segment == "pointer":
                 self.__pop_from_stack()
@@ -269,9 +269,9 @@ class CodeWriter:
 
     def write_label(self, label):
         """
-
-        :param label:
-        :return:
+        writes assembly code that effects the label command. The method
+        supports both normal labels and in-function labels.
+        :param label: name of the label to create.
         """
         if self.funcname == '':  # not inside a function
             if label[-1] == '\n':
@@ -281,25 +281,26 @@ class CodeWriter:
             self.write(my_str)
         else:  # inside a function
             if label[-1] == '\n':
-                my_str = '(' + self.file_name + '.' + self.funcname + '$' + label[:-1] + ')'
+                my_str = '(' + self.funcname + '$' + label[:-1] + ')'
             else:
-                my_str = '(' + self.file_name + '.' + self.funcname + '$' + label + ')'
+                my_str = '(' + self.funcname + '$' + label + ')'
             self.write(my_str)
 
     def write_goto(self, goto):
         """
-
-        :param goto:
-        :return:
+        writes assembly code that effects the goto command.
+        :param goto: the goto variable.
         """
         if self.funcname != '':  # inside func
-            self.write('@' + self.file_name + '.' + self.funcname + '$' + goto)
+            self.write('@' + self.funcname + '$' + goto)
         else:
             self.write('@' + goto)
         self.write('0;JMP')
 
     def write_ifgoto(self, ifgoto):
         """
+        writes assembly code that effects the if-goto command.
+        :param ifgoto: the condition and jump address.
         """
         self.write('@SP')
         self.write('A=M-1')
@@ -308,33 +309,32 @@ class CodeWriter:
         self.write('M=M-1')
         if self.funcname != '':
             self.write(
-                '@' + self.file_name + '.' + self.funcname + '$' + ifgoto)
+                '@' + self.funcname + '$' + ifgoto)
         else:
             self.write('@' + ifgoto)
         self.write('D;JNE')
 
     def write_function(self, fname, num_of_args):
         """
-
-        :param fname:
-        :param num_of_args:
-        :return:
+        This method prepares the ground for function call, sets return label
+        and argument spots.
+        :param fname: name of the function.
+        :param num_of_args: number of arguments.
         """
-        self.write('(' + self.file_name + '.' + fname + ')')
-        for i in range(int(num_of_args)):
+        self.write('(' + fname + ')')  # creates return label
+        for i in range(int(num_of_args)):  # sets argument spots
             self.write('@R0')
             self.write('D=A')
             self.__push_to_stack()
 
     def write_call(self, fname, nargs):
         """
-
-        :param fname:
-        :param nargs:
-        :return:
+        Sets a frame for the function and the return address.
+        :param fname: function name.
+        :param nargs: number of args.
         """
         self.__ccounter += 1
-        self.write('@RETURN' + str(self.__ccounter))  # push return address
+        self.write('@' + fname + '$' + "RETURN" + str(self.__ccounter))  # push return address
         self.write('D=A')
         self.__push_to_stack()
         for item in ['@LCL', '@ARG', '@THIS', '@THAT']:
@@ -342,11 +342,8 @@ class CodeWriter:
             self.write("D=M")
             self.__push_to_stack()
 
-        self.write('@5')  # arg=sp-5-nargs
+        self.write('@' + str(int(5) + int(nargs)))  # arg=sp-5-nargs
         self.write('D=A')
-        print(nargs)
-        self.write('@' + str(nargs))
-        self.write('D=D+A')
         self.write('@SP')
         self.write('D=M-D')
         self.write('@ARG')
@@ -357,26 +354,28 @@ class CodeWriter:
         self.write('@LCL')
         self.write('M=D')
 
-        self.write_goto(fname)  # goto fname
+        self.write("@" + fname)  # goto fname
+        self.write("0;JMP")
 
-        self.write_label('RETURN' + str(self.__ccounter))  # declare label
+        self.write('(' + fname + '$'+ "RETURN" + str(self.__ccounter)+')')
 
-    def __increase_R15(self, item):
+    def __restore_vals(self, item, index):
         """
         An helper method which returns values to pre-function call state.
         :param item: value to return.
         """
-        self.write('@R15')
-        self.write('M=M+1')
-        self.write('A=M')
-        self.write('D=M')
-        self.write('@' + item)
-        self.write('M=D')
+        self.write("@ENDFRAME" + str(self.__ccounter))
+        self.write("D=M")
+        self.write("@" + str(index))
+        self.write("D=D-A")
+        self.write("A=D")
+        self.write("D=M")
+        self.write("@" + item)
+        self.write("M=D")
 
     def write_return(self):
         """
-
-        :return:
+        writes assembly code that sets up the return command.
         """
         self.write('//# endframe = LCL')
         self.write('@LCL')  # endframe = LCL
@@ -386,9 +385,6 @@ class CodeWriter:
         self.write('//#  # retaddr = *(endframe-5)')
         self.write('@5')  # retaddr = *(endframe-5)'
         self.write('D=D-A')
-        self.write("// # saving endframe-5 in R15")
-        self.write('@R15')  # saving endframe-5 in R15
-        self.write('M=D')
 
         self.write('A=D')
         self.write('D=M')
@@ -412,16 +408,25 @@ class CodeWriter:
         self.write('M=D+1')
 
         #  return all proper values to previous state
-        self.__increase_R15('LCL')
-        self.__increase_R15('ARG')
-        self.__increase_R15('THIS')
-        self.__increase_R15('THAT')
+        self.__restore_vals("THAT", 1)
+        self.__restore_vals("THIS", 2)
+        self.__restore_vals("ARG", 3)
+        self.__restore_vals("LCL", 4)
 
         # writing final go-to
         self.write('@RETURN' + str(self.__ccounter))
         self.write('A=M')
         self.write('0;JMP')
 
+    def write_init(self):
+        """
+        Writes the bootstrap code.
+        """
+        self.write("@256")
+        self.write("D=A")
+        self.write("@SP")
+        self.write("M=D")
+        self.write_call("Sys.init", 0)
 
     def __get_address(self, index, segment):
         """
@@ -486,8 +491,11 @@ class VMtranslator:
             self.CW = CodeWriter(path + "/" + name)
             file_list = [file for file in os.listdir(self.file_path)
                          if ".vm" in file]  # create list of vm files
+            if "Sys.vm" in file_list:
+                self.CW.write_init()
             for item in file_list:
                 self.__translate(self.file_path + "/" + item)
+
         else:
             self.CW = CodeWriter(self.file_path)  # path holds one file
             self.__translate(self.file_path)
@@ -498,41 +506,41 @@ class VMtranslator:
         translates a given file from vm to hack code.
         """
         temp_parser = Parser(item)  # create parser
-        self.CW.set_filename(item[:-3])
+        self.CW.set_filename(item.split("/")[1][:-3])
         while temp_parser.has_more_commands():
             self.CW.funcname = ''
             temp_parser.advance()  # get next command
-            if temp_parser.command_type() == "C_PUSH" or \
-                    temp_parser.command_type() == "C_POP":
-                self.CW.write(
-                    "// writing:" + temp_parser.command_type() +
-                    " " + temp_parser.arg1() + " " + temp_parser.arg2())
-                self.CW.write_push_pop(temp_parser.command_type(),
-                                       temp_parser.arg1(), temp_parser.arg2())
-            elif temp_parser.command_type() == "C_ARITHMETIC":
-                self.CW.write("// writing arithmetic: " + temp_parser.arg1())
-                self.CW.write_arithmetic(temp_parser.arg1())
-            elif temp_parser.command_type() == "C_LABEL":
-                self.CW.write("// writing label: " + temp_parser.arg1())
-                self.CW.write_label(temp_parser.arg1())
-            elif temp_parser.command_type() == "C_GOTO":
-                self.CW.write("// writing goto: " + temp_parser.arg1())
-                self.CW.write_goto(temp_parser.arg1())
-            elif temp_parser.command_type() == "C_IF":
-                self.CW.write("// writing if-goto: " + temp_parser.arg1())
-                self.CW.write_ifgoto(temp_parser.arg1())
-            elif temp_parser.command_type() == "C_FUNCTION":
-                self.CW.write("// writing function: " + temp_parser.arg1())
-                self.CW.funcname = temp_parser.arg1()
-                self.CW.write_function(temp_parser.arg1(), temp_parser.arg2())
-            elif temp_parser.command_type() == "C_RETURN":
-                self.CW.write("// writing return: " + temp_parser.arg1())
+            arg1 = temp_parser.arg1()
+            cmnd = temp_parser.command_type()
+            if cmnd == "C_PUSH" or cmnd == "C_POP":
+                arg2 = temp_parser.arg2()
+                self.CW.write("// writing:" + cmnd + " " + arg1 + " " + arg2)
+                self.CW.write_push_pop(cmnd, arg1, arg2)
+            elif cmnd == "C_ARITHMETIC":
+                self.CW.write("// writing arithmetic: " + arg1)
+                self.CW.write_arithmetic(arg1)
+            elif cmnd == "C_LABEL":
+                self.CW.write("// writing label: " + arg1)
+                self.CW.write_label(arg1)
+            elif cmnd == "C_GOTO":
+                self.CW.write("// writing goto: " + arg1)
+                self.CW.write_goto(arg1)
+            elif cmnd == "C_IF":
+                self.CW.write("// writing if-goto: " + arg1)
+                self.CW.write_ifgoto(arg1)
+            elif cmnd == "C_FUNCTION":
+                arg2 = temp_parser.arg2()
+                self.CW.write("// writing function: " + arg1)
+                self.CW.funcname = arg1
+                self.CW.write_function(arg1, arg2)
+            elif cmnd == "C_RETURN":
+                self.CW.write("// writing return: " + arg1)
                 self.CW.write_return()
-            elif temp_parser.command_type() == "C_CALL":
-                print("pprint "+temp_parser.arg2())
-                self.CW.write("//writing call: "+temp_parser.arg1())
-                self.CW.funcname = temp_parser.arg1()
-                self.CW.write_call(temp_parser.arg1(), temp_parser.arg2())
+            elif cmnd == "C_CALL":
+                arg2 = temp_parser.arg2()
+                self.CW.write("//writing call: " + arg1)
+                self.CW.funcname = arg1
+                self.CW.write_call(arg1, arg2)
 
 
 if __name__ == '__main__':
