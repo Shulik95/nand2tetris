@@ -491,13 +491,12 @@ class VMtranslator:
             self.CW = CodeWriter(path + "/" + name)
             file_list = [file for file in os.listdir(self.file_path)
                          if ".vm" in file]  # create list of vm files
-            if "Sys.vm" in file_list:
-                self.CW.write_init()
+            self.CW.write_init()
             for item in file_list:
                 self.__translate(self.file_path + "/" + item)
-
         else:
             self.CW = CodeWriter(self.file_path)  # path holds one file
+            self.CW.write_init()
             self.__translate(self.file_path)
         self.CW.close()
 
