@@ -510,6 +510,7 @@ class VMtranslator:
         while temp_parser.has_more_commands():
             self.CW.funcname = ''
             temp_parser.advance()  # get next command
+<<<<<<< HEAD
             arg1 = temp_parser.arg1()
             cmnd = temp_parser.command_type()
             if cmnd == "C_PUSH" or cmnd == "C_POP":
@@ -535,12 +536,47 @@ class VMtranslator:
                 self.CW.write_function(arg1, arg2)
             elif cmnd == "C_RETURN":
                 self.CW.write("// writing return: " + arg1)
+=======
+            if temp_parser.command_type() == "C_PUSH" or \
+                    temp_parser.command_type() == "C_POP":
+                self.CW.write(
+                    "// writing:" + temp_parser.command_type() +
+                    " " + temp_parser.arg1() + " " + temp_parser.arg2())
+                self.CW.write_push_pop(temp_parser.command_type(),
+                                       temp_parser.arg1(), temp_parser.arg2())
+            elif temp_parser.command_type() == "C_ARITHMETIC":
+                self.CW.write("// writing arithmetic: " + temp_parser.arg1())
+                self.CW.write_arithmetic(temp_parser.arg1())
+            elif temp_parser.command_type() == "C_LABEL":
+                self.CW.write("// writing label: " + temp_parser.arg1())
+                self.CW.write_label(temp_parser.arg1())
+            elif temp_parser.command_type() == "C_GOTO":
+                self.CW.write("// writing goto: " + temp_parser.arg1())
+                self.CW.write_goto(temp_parser.arg1())
+            elif temp_parser.command_type() == "C_IF":
+                self.CW.write("// writing if-goto: " + temp_parser.arg1())
+                self.CW.write_ifgoto(temp_parser.arg1())
+            elif temp_parser.command_type() == "C_FUNCTION":
+                self.CW.write("// writing function: " + temp_parser.arg1())
+                self.CW.funcname = temp_parser.arg1()
+                self.CW.write_function(temp_parser.arg1(), temp_parser.arg2())
+            elif temp_parser.command_type() == "C_RETURN":
+                self.CW.write("// writing return: " + temp_parser.arg1())
+
+                self.CW.write_return()
+                self.CW.funcname = ''
+            elif temp_parser.command_type() == "C_CALL":
+                self.CW.write('// writing call:'+temp_parser.arg1())
+                self.CW.write_call(temp_parser.arg1(),temp_parser.arg2())
+
+>>>>>>> 861712305f140d92c65718ed3383f18a94732017
                 self.CW.write_return()
             elif cmnd == "C_CALL":
                 arg2 = temp_parser.arg2()
                 self.CW.write("//writing call: " + arg1)
                 self.CW.funcname = arg1
                 self.CW.write_call(arg1, arg2)
+
 
 
 if __name__ == '__main__':
