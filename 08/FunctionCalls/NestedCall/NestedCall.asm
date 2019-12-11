@@ -31,7 +31,7 @@ D=M
 @R4
 M=D
 //writing call: Sys.main
-@RETURN0
+@RETURN1
 D=A
 @SP
 A=M
@@ -72,15 +72,15 @@ D=A
 D=D+A
 @SP
 D=M-D
-@ARGS
+@ARG
 M=D
 @SP
 D=M
 @LCL
 M=D
-@NestedCall.Sys.init$Sys.main
+@NestedCall.Sys.main$Sys.main
 0;JMP
-(NestedCall.Sys.init$RETURN0)
+(NestedCall.Sys.main$RETURN1)
 // writing:C_POP temp 1
 @SP
 M=M-1
@@ -89,9 +89,9 @@ D=M
 @R6
 M=D
 // writing label: LOOP
-(NestedCall.Sys.init$LOOP)
+(LOOP)
 // writing goto: LOOP
-@NestedCall.Sys.init$LOOP
+@LOOP
 0;JMP
 // writing function: Sys.main
 (NestedCall.Sys.main)
@@ -235,7 +235,7 @@ M=D
 @SP
 M=M+1
 //writing call: Sys.add12
-@RETURN0
+@RETURN2
 D=A
 @SP
 A=M
@@ -276,15 +276,15 @@ D=A
 D=D+A
 @SP
 D=M-D
-@ARGS
+@ARG
 M=D
 @SP
 D=M
 @LCL
 M=D
-@NestedCall.Sys.main$Sys.add12
+@NestedCall.Sys.add12$Sys.add12
 0;JMP
-(NestedCall.Sys.main$RETURN0)
+(NestedCall.Sys.add12$RETURN2)
 // writing:C_POP temp 0
 @SP
 M=M-1
@@ -392,25 +392,36 @@ M=M+D
 @SP
 M=M+1
 // writing return: return
+//# endframe = LCL
 @LCL
 D=M
-@ENDFRAME0
+@ENDFRAME2
 M=D
+//#  # retaddr = *(endframe-5)
 @5
 D=D-A
+// # saving endframe-5 in R15
 @R15
 M=D
 A=D
 D=M
-@RETURN0
+@RETURN2
+M=D
+//# *ARG = pop()
+@0
+D=A
+@ARG
+D=M+D
+@R14
 M=D
 @SP
 M=M-1
 A=M
 D=M
-@ARG
+@R14
 A=M
 M=D
+//# sp = arg + 1
 @ARG
 D=M
 @SP
@@ -439,7 +450,7 @@ A=M
 D=M
 @THAT
 M=D
-@RETURN0
+@RETURN2
 A=M
 0;JMP
 // writing function: Sys.add12
@@ -505,25 +516,36 @@ M=M+D
 @SP
 M=M+1
 // writing return: return
+//# endframe = LCL
 @LCL
 D=M
-@ENDFRAME1
+@ENDFRAME2
 M=D
+//#  # retaddr = *(endframe-5)
 @5
 D=D-A
+// # saving endframe-5 in R15
 @R15
 M=D
 A=D
 D=M
-@RETURN1
+@RETURN2
+M=D
+//# *ARG = pop()
+@0
+D=A
+@ARG
+D=M+D
+@R14
 M=D
 @SP
 M=M-1
 A=M
 D=M
-@ARG
+@R14
 A=M
 M=D
+//# sp = arg + 1
 @ARG
 D=M
 @SP
@@ -552,6 +574,6 @@ A=M
 D=M
 @THAT
 M=D
-@RETURN1
+@RETURN2
 A=M
 0;JMP

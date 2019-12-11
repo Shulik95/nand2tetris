@@ -333,6 +333,7 @@ class CodeWriter:
         :param nargs:
         :return:
         """
+        self.__ccounter += 1
         self.write('@RETURN' + str(self.__ccounter))  # push return address
         self.write('D=A')
         self.__push_to_stack()
@@ -343,6 +344,7 @@ class CodeWriter:
 
         self.write('@5')  # arg=sp-5-nargs
         self.write('D=A')
+        print(nargs)
         self.write('@' + str(nargs))
         self.write('D=D+A')
         self.write('@SP')
@@ -376,15 +378,15 @@ class CodeWriter:
 
         :return:
         """
-
+        self.write('//# endframe = LCL')
         self.write('@LCL')  # endframe = LCL
         self.write('D=M')
         self.write('@ENDFRAME' + str(self.__ccounter))
         self.write('M=D')
-
+        self.write('//#  # retaddr = *(endframe-5)')
         self.write('@5')  # retaddr = *(endframe-5)'
         self.write('D=D-A')
-
+        self.write("// # saving endframe-5 in R15")
         self.write('@R15')  # saving endframe-5 in R15
         self.write('M=D')
 
@@ -392,11 +394,17 @@ class CodeWriter:
         self.write('D=M')
         self.write('@RETURN' + str(self.__ccounter))
         self.write('M=D')
-
+        self.write("//# *ARG = pop()")
+        self.__get_address(0, "argument")  # returns value to ARG 0
+        self.write("D=M+D")
+        self.write("@R14")
+        self.write("M=D")  # saves value in R14
         self.__pop_from_stack()  # *ARG = pop()
-        self.write('@ARG')
+        self.write('@R14')
         self.write('A=M')
         self.write('M=D')
+
+        self.write("//# sp = arg + 1")
 
         self.write('@ARG')  # sp = arg + 1
         self.write('D=M')
@@ -414,7 +422,6 @@ class CodeWriter:
         self.write('A=M')
         self.write('0;JMP')
 
-        self.__ccounter += 1
 
     def __get_address(self, index, segment):
         """
@@ -493,6 +500,7 @@ class VMtranslator:
         temp_parser = Parser(item)  # create parser
         self.CW.set_filename(item[:-3])
         while temp_parser.has_more_commands():
+            self.CW.funcname = ''
             temp_parser.advance()  # get next command
             if temp_parser.command_type() == "C_PUSH" or \
                     temp_parser.command_type() == "C_POP":
@@ -520,9 +528,10 @@ class VMtranslator:
             elif temp_parser.command_type() == "C_RETURN":
                 self.CW.write("// writing return: " + temp_parser.arg1())
                 self.CW.write_return()
-                self.CW.funcname = ''
             elif temp_parser.command_type() == "C_CALL":
+                print("pprint "+temp_parser.arg2())
                 self.CW.write("//writing call: "+temp_parser.arg1())
+                self.CW.funcname = temp_parser.arg1()
                 self.CW.write_call(temp_parser.arg1(), temp_parser.arg2())
 
 
