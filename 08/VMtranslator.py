@@ -521,6 +521,9 @@ class VMtranslator:
                 self.CW.write("// writing return: " + temp_parser.arg1())
                 self.CW.write_return()
                 self.CW.funcname = ''
+            elif temp_parser.command_type() == "C_CALL":
+                self.CW.write('// writing call:'+temp_parser.arg1())
+                self.CW.write_call(temp_parser.arg1(),temp_parser.arg2())
 
 
 if __name__ == '__main__':
