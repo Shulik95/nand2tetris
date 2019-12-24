@@ -103,25 +103,36 @@ M=M-D
 @SP
 M=M+1
 // writing return: return
+//# endframe = LCL
 @LCL
 D=M
 @ENDFRAME0
 M=D
+//#  # retaddr = *(endframe-5)
 @5
 D=D-A
+// # saving endframe-5 in R15
 @R15
 M=D
 A=D
 D=M
 @RETURN0
 M=D
+//# *ARG = pop()
+@0
+D=A
+@ARG
+D=M+D
+@R14
+M=D
 @SP
 M=M-1
 A=M
 D=M
-@ARG
+@R14
 A=M
 M=D
+//# sp = arg + 1
 @ARG
 D=M
 @SP
