@@ -119,6 +119,9 @@ class CompilationEngine:
                     current == 'constructor':
                 self.cmp_subroutine_dec()
 
+            elif current == 'var':
+                self.cmp_var_dec()
+
             if self.tknz.token_count < len(self.tknz.all_tokens)-1:
                 self.tknz.advance()
 
@@ -177,7 +180,28 @@ class CompilationEngine:
         pass
 
     def cmp_var_dec(self):
-        pass
+        self.file.write('<varDec>\n')
+        self.file.write(self.tknz.keyword())
+        self.tknz.advance()
+        if self.tknz.token_type() == 'IDENTIFIER':
+            self.file.write(self.tknz.identifier())
+        else:
+            self.file.write(self.tknz.keyword())
+        self.tknz.advance()
+        self.file.write(self.tknz.identifier())
+        self.tknz.advance()
+        while self.tknz.curr_token == ',':
+            self.file.write(self.tknz.symbol())
+            self.tknz.advance()
+            self.file.write(self.tknz.identifier())
+            self.tknz.advance()
+        self.file.write(self.tknz.symbol())
+        self.file.write('</varDec>\n')
+
+
+
+
+
 
     def cmp_statement(self):
         pass

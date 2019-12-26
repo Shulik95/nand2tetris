@@ -1,4 +1,6 @@
 class Square {
 
 
-   constructor int new(int Ax, int Ay, int Asize){
+   var Array a;
+   var int length;
+   var int i,sum;
