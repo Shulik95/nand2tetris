@@ -44,6 +44,7 @@ class Tokenizer:
              'while': 'KEYWORD', 'return': 'KEYWORD',
 
              }
+        self.get_all_tokens()
 
     def get_all_tokens(self):
         for line in self.lines:
@@ -82,19 +83,19 @@ class Tokenizer:
             return 'IDENTIFIER'
 
     def keyword(self):
-        return self.curr_token.upper()
+        return '<keyword> ' + self.curr_token + ' </keyword>\n'
 
     def symbol(self):
-        return self.curr_token
+        return '<symbol> ' + self.curr_token + ' </symbol>\n'
 
     def identifier(self):
-        return self.curr_token
+        return '<identifier> ' + self.curr_token + ' </identifier>\n'
 
     def int_val(self):
-        return int(self.curr_token)
+        return '<integerConstant> ' + self.curr_token + ' </integerConstant>\n'
 
     def string_val(self):
-        return self.curr_token
+        return '<stringConstant> ' + self.curr_token + ' </stringConstant>\n'
 
 
 class CompilationEngine:
@@ -105,39 +106,72 @@ class CompilationEngine:
         self.tknz = tknz
 
     def cmp_class(self):
+        self.file.write('<class>\n')
+        self.tknz.advance()
         while self.tknz.has_more_tokens():
-            self.tknz.advance()
-            mytype = self.tknz.token_type()
-            if mytype == 'KEYWORD':
-                keytype = self.tknz.keyword()
-                if keytype == 'CLASS':
-                    pass
+            current = self.tknz.curr_token
 
-    # def write_brac(self):
-    #     if self.tknz.token_type() == 'INT CONST':
-    #         prefix = self.tknz.int_val()
-    #     elif self.tknz.token_type() == 'STRING CONST':
-    #         prefix = self.tknz.string_val()
-    #     elif self.tknz.token_type() == 'IDENTIFIER':
-    #         prefix = self.tknz.identifier()
-    #     elif self.tknz.token_type() == 'SYMBOL':
-    #         prefix = self.tknz.symbol()
-    #     else:
-    #         prefix = self.tknz.keyword()
-    #     return prefix
+            if current == 'field' or \
+                    current == 'static':
+                self.cmp_class_var_dec()
+
+            elif current == 'method' or current == 'function' or \
+                    current == 'constructor':
+                self.cmp_subroutine_dec()
+
+            if self.tknz.token_count < len(self.tknz.all_tokens)-1:
+                self.tknz.advance()
+
+        self.file.write('</class>\n')
 
     def cmp_class_var_dec(self):
-        decorate = '<' + self.tknz.token_type().lower() + '/>'
+        self.file.write('<classVarDec>\n')
+        while self.tknz.curr_token != ';':
+            suffix = ' </' + self.tknz.token_type().lower() + '> '
+            prefix = ' <' + self.tknz.token_type().lower() + '> '
+            self.file.write(prefix + self.tknz.curr_token + suffix + '\n')
+            self.tknz.advance()
+        self.file.write(self.tknz.symbol())
+        self.file.write('</classVarDec>\n')
 
-        while self.tknz.token_type() is not 'SYMBOL':
-            self.file.write(decorate + self.tknz.curr_token + decorate)
-        self.file.write('<symbol>'+self.tknz.curr_token+'</sumbol')
+    def peek(self):
+        return self.tknz.all_tokens[self.tknz.token_count + 1]
 
     def cmp_subroutine_dec(self):
-        pass
+        self.file.write('<subroutineDec>\n')
+        self.file.write(self.tknz.keyword())
+        self.tknz.advance()
+        if self.tknz.token_type() == 'IDENTIFIER':
+            self.file.write(self.tknz.identifier())
+        else:
+            self.file.write(self.tknz.keyword())
+        self.tknz.advance()
+        self.file.write(self.tknz.identifier())
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol()) # (
+        self.cmp_param_lst()
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol()) # )
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol()) # {
+        self.file.write('</subroutineDec>\n')
 
     def cmp_param_lst(self):
-        pass
+        self.file.write('<parameterList>\n')
+        if self.peek() == ')':
+            self.file.write('</parameterList>\n')
+            return
+        while True:
+            self.tknz.advance()
+            self.file.write(self.tknz.keyword())
+            self.tknz.advance()
+            self.file.write(self.tknz.identifier())
+            if self.peek() != ')':
+                self.tknz.advance()
+                self.file.write(self.tknz.symbol())
+            else:
+                self.file.write('</parameterList>\n')
+                break
 
     def cmp_subroutine_body(self):
         pass
@@ -174,13 +208,28 @@ class CompilationEngine:
 
 
 class JackAnalyzer:
-    pass
+    def __init__(self, jack_file):
+        self.file_path = jack_file
+        self.engine = None
+        self.tknz = None
+
+    def main(self):
+        if os.path.isdir(self.file_path):
+            path = self.file_path
+            name = os.path.basename(path) + '.xml'
+            file_list = [file for file in os.listdir(self.file_path)
+                         if ".jack" in file]
+            for item in file_list:
+                self.tknz = Tokenizer(item)
+                self.engine = CompilationEngine(name, self.tknz)
+                self.engine.cmp_class()
+        else:
+            self.tknz = Tokenizer(self.file_path)
+            self.engine = CompilationEngine(self.file_path, self.tknz)
+            self.engine.cmp_class()
 
 
 if __name__ == "__main__":
-    file = sys.argv[1]
-    tokenz = Tokenizer(file)
-    tokenz.get_all_tokens()
-    # while tokenz.has_more_tokens():
-    #     tokenz.advance()
-    #     print(tokenz.token_type())
+    file_or_path = sys.argv[1]
+    JA = JackAnalyzer(file_or_path)
+    JA.main()
