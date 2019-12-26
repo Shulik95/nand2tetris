@@ -112,15 +112,26 @@ class CompilationEngine:
                 keytype = self.tknz.keyword()
                 if keytype == 'CLASS':
                     pass
-                
 
-
-
-
-
+    # def write_brac(self):
+    #     if self.tknz.token_type() == 'INT CONST':
+    #         prefix = self.tknz.int_val()
+    #     elif self.tknz.token_type() == 'STRING CONST':
+    #         prefix = self.tknz.string_val()
+    #     elif self.tknz.token_type() == 'IDENTIFIER':
+    #         prefix = self.tknz.identifier()
+    #     elif self.tknz.token_type() == 'SYMBOL':
+    #         prefix = self.tknz.symbol()
+    #     else:
+    #         prefix = self.tknz.keyword()
+    #     return prefix
 
     def cmp_class_var_dec(self):
-        pass
+        decorate = '<' + self.tknz.token_type().lower() + '/>'
+
+        while self.tknz.token_type() is not 'SYMBOL':
+            self.file.write(decorate + self.tknz.curr_token + decorate)
+        self.file.write('<symbol>'+self.tknz.curr_token+'</sumbol')
 
     def cmp_subroutine_dec(self):
         pass
@@ -160,11 +171,6 @@ class CompilationEngine:
 
     def cmp_expression_lst(self):
         pass
-
-
-
-
-
 
 
 class JackAnalyzer:
