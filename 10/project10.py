@@ -122,6 +122,9 @@ class CompilationEngine:
             elif current == 'var':
                 self.cmp_var_dec()
 
+            elif current == 'let':
+                self.cmp_let()
+
             if self.tknz.token_count < len(self.tknz.all_tokens)-1:
                 self.tknz.advance()
 
@@ -198,16 +201,26 @@ class CompilationEngine:
         self.file.write(self.tknz.symbol())
         self.file.write('</varDec>\n')
 
-
-
-
-
-
     def cmp_statement(self):
         pass
 
     def cmp_let(self):
-        pass
+        self.file.write('<letStatement>\n')
+        self.file.write(self.tknz.keyword())
+        self.tknz.advance()
+        self.file.write(self.tknz.identifier())
+        if self.peek() == '[':
+            self.tknz.advance()
+            self.file.write(self.tknz.symbol()) #[
+            self.cmp_expression()
+            self.tknz.advance()
+            self.file.write(self.tknz.symbol()) # ]
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol()) # =
+        self.cmp_expression()
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol())  # ;
+        self.file.write('</letStatement>\n')
 
     def cmp_if(self):
         pass
