@@ -74,9 +74,9 @@ class Tokenizer:
 
     def token_type(self):
         if self.curr_token.isdigit():
-            return 'INT_CONST'
+            return 'integerConstant'
         elif " \" " in self.curr_token:
-            return 'STRING_CONST'
+            return 'stringConstant'
         elif self.curr_token in self.types:
             return self.types[self.curr_token]
         else:
@@ -125,7 +125,7 @@ class CompilationEngine:
             elif current == 'let':
                 self.cmp_let()
 
-            if self.tknz.token_count < len(self.tknz.all_tokens)-1:
+            if self.tknz.token_count < len(self.tknz.all_tokens) - 1:
                 self.tknz.advance()
 
         self.file.write('</class>\n')
@@ -154,12 +154,12 @@ class CompilationEngine:
         self.tknz.advance()
         self.file.write(self.tknz.identifier())
         self.tknz.advance()
-        self.file.write(self.tknz.symbol()) # (
+        self.file.write(self.tknz.symbol())  # (
         self.cmp_param_lst()
         self.tknz.advance()
-        self.file.write(self.tknz.symbol()) # )
+        self.file.write(self.tknz.symbol())  # )
         self.tknz.advance()
-        self.file.write(self.tknz.symbol()) # {
+        self.file.write(self.tknz.symbol())  # {
         self.file.write('</subroutineDec>\n')
 
     def cmp_param_lst(self):
@@ -211,12 +211,12 @@ class CompilationEngine:
         self.file.write(self.tknz.identifier())
         if self.peek() == '[':
             self.tknz.advance()
-            self.file.write(self.tknz.symbol()) #[
+            self.file.write(self.tknz.symbol())  # [
             self.cmp_expression()
             self.tknz.advance()
-            self.file.write(self.tknz.symbol()) # ]
+            self.file.write(self.tknz.symbol())  # ]
         self.tknz.advance()
-        self.file.write(self.tknz.symbol()) # =
+        self.file.write(self.tknz.symbol())  # =
         self.cmp_expression()
         self.tknz.advance()
         self.file.write(self.tknz.symbol())  # ;
@@ -235,10 +235,46 @@ class CompilationEngine:
         pass
 
     def cmp_expression(self):
-        pass
+        self.file.write("<expression>\n")
+
+        self.file.write("</expression>\n")
 
     def cmp_term(self):
-        pass
+        tType = self.tknz.token_type()
+        self.file.write("<term>")
+        if tType in ["integerConstant", "stringConstant"]:
+            self.file.write(
+                "<" + tType + "> " + self.tknz.curr_token + " </" + tType + ">")
+        elif tType == "KEYWORD":
+            self.tknz.keyword()
+        elif tType == "IDENTIFIER":
+            nextT = self.peek()
+            self.tknz.identifier()
+            self.tknz.advance()
+            if nextT == "[":
+                self.term_helper(self.cmp_expression())
+            elif nextT == "(":
+                self.term_helper(self.cmp_expression_lst())
+            elif nextT == ".":
+                self.tknz.symbol()  # .
+                self.tknz.advance()
+                self.tknz.symbol()  # (
+                self.cmp_expression_lst()
+                self.tknz.advance()
+                self.tknz.symbol()  # )
+        elif tType == "SYMBOL":
+            self.term_helper(self.cmp_expression())
+        else:
+            self.tknz.symbol()
+            self.cmp_term()
+        self.file.write("</term>")
+
+    def term_helper(self, func):
+        self.tknz.symbol()  # [
+        self.tknz.advance()
+        func()
+        self.tknz.advance()
+        self.tknz.symbol()  # ]
 
     def cmp_expression_lst(self):
         pass
