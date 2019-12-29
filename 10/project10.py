@@ -169,7 +169,7 @@ class CompilationEngine:
         self.tknz.advance()
         self.file.write(self.tknz.symbol())  # )
         self.tknz.advance()
-        self.file.write(self.tknz.symbol())  # {
+        self.cmp_subroutine_body()
         self.file.write('</subroutineDec>\n')
 
     def cmp_param_lst(self):
@@ -190,7 +190,19 @@ class CompilationEngine:
                 break
 
     def cmp_subroutine_body(self):
-        pass
+        """
+
+        :return:
+        """
+        self.file.write("<subroutineBody>")
+        self.file.write(self.tknz.symbol())  # "{"
+        while self.peek() == "var":  # has more method variables
+            self.tknz.advance()
+            self.cmp_var_dec()
+        self.tknz.advance()
+        self.cmp_statement()
+        self.file.write(self.tknz.symbol())  # "}"
+        self.file.write("</subroutineBody>")
 
     def cmp_var_dec(self):
         self.file.write('<varDec>\n')
@@ -217,7 +229,6 @@ class CompilationEngine:
         :return:
         """
         self.file.write("<statements>\n")
-
         while self.tknz.curr_token != "}":
             self.__cmp_stat_helper()
             self.tknz.advance()
@@ -264,7 +275,6 @@ class CompilationEngine:
         self.file.write(self.tknz.symbol())  # (
         self.tknz.advance()
         self.cmp_expression()
-        #self.tknz.advance()
         self.file.write(self.tknz.symbol())  # )
         self.__brack_and_statment()
 
@@ -283,7 +293,6 @@ class CompilationEngine:
         self.file.write(self.tknz.symbol())  # {
         self.tknz.advance()
         self.cmp_statement()
-        # self.tknz.advance()
         self.file.write(self.tknz.symbol())  # }
 
     def cmp_while(self):
@@ -296,7 +305,6 @@ class CompilationEngine:
         self.file.write(self.tknz.symbol())  # (
         self.tknz.advance()
         self.cmp_expression()
-        self.tknz.advance()
         self.file.write(self.tknz.symbol())  # )
         self.__brack_and_statment()
         self.file.write("</whileStatement>\n")
@@ -316,7 +324,19 @@ class CompilationEngine:
         self.file.write("</doStatement>\n")
 
     def cmp_return(self):
-        pass
+        """
+        compiles a return statement, handles both cases. with expressions or
+        expressionless.
+        """
+        self.file.write("<returnStatement>\n")
+        self.file.write(self.tknz.keyword())  # writes 'return'
+        if self.peek() != ";":  # has expressions
+            self.tknz.advance()
+            self.cmp_expression()
+        else:  # no expressions
+            self.tknz.advance()
+        self.file.write(self.tknz.symbol())
+        self.file.write("</returnStatement>\n")
 
     def cmp_expression(self):
         """
@@ -398,7 +418,6 @@ class CompilationEngine:
         self.file.write(self.tknz.symbol())  # [ / (
         self.tknz.advance()
         func()
-        #self.tknz.advance()
         self.file.write(self.tknz.symbol())  # ] / )
 
     def cmp_expression_lst(self):
@@ -446,9 +465,7 @@ class JackAnalyzer:
         else:
             self.tknz = Tokenizer(self.file_path)
             self.engine = CompilationEngine(self.file_path, self.tknz)
-            self.tknz.advance()
-            self.engine.cmp_if()
-            # self.engine.cmp_class()
+            self.engine.cmp_class()
 
 
 if __name__ == "__main__":
