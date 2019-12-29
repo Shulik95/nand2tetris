@@ -113,45 +113,56 @@ class CompilationEngine:
         self.tknz = tknz
 
     def cmp_class(self):
+        """
+        compiles an entire class using pre-made methods.
+        """
         self.file.write('<class>\n')
         self.tknz.advance()
-        while self.tknz.has_more_tokens():
-            current = self.tknz.curr_token
-
-            if current == 'field' or \
-                    current == 'static':
-                self.cmp_class_var_dec()
-
-            elif current == 'method' or current == 'function' or \
-                    current == 'constructor':
-                self.cmp_subroutine_dec()
-
-            elif current == 'var':
-                self.cmp_var_dec()
-
-            elif current == 'let':
-                self.cmp_let()
-
-            if self.tknz.token_count < len(self.tknz.all_tokens) - 1:
-                self.tknz.advance()
-
+        self.file.write(self.tknz.keyword())  # writes 'class'
+        self.tknz.advance()
+        self.file.write(self.tknz.identifier())  # writes class name
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol())  # "{"
+        while self.peek() in ['static', 'field']:  # checks for class variables
+            self.tknz.advance()
+            self.cmp_class_var_dec()
+        while self.peek() in ['method', 'function', 'constructor']:
+            self.tknz.advance()
+            self.cmp_subroutine_dec()
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol())  # "}"
         self.file.write('</class>\n')
 
     def cmp_class_var_dec(self):
+        """
+        compiles all class variables.
+        """
         self.file.write('<classVarDec>\n')
-        while self.tknz.curr_token != ';':
-            suffix = ' </' + self.tknz.token_type().lower() + '> '
-            prefix = ' <' + self.tknz.token_type().lower() + '> '
-            self.file.write(prefix + self.tknz.curr_token + suffix + '\n')
+        self.file.write(self.tknz.keyword())
+        self.tknz.advance()
+        if self.tknz.curr_token in ['int', 'char', 'boolean']:
+            self.file.write(self.tknz.keyword())
+        else:
+            self.file.write(self.tknz.identifier())
+        self.tknz.advance()
+        self.file.write(self.tknz.identifier())
+        while self.peek() == ",":
+            self.tknz.advance()  # moves to ','
+            self.file.write(self.tknz.symbol())
             self.tknz.advance()
+            self.file.write(self.tknz.identifier())
+        self.tknz.advance()  # moves to ';'
         self.file.write(self.tknz.symbol())
         self.file.write('</classVarDec>\n')
 
     def peek(self):
+        """
+        peeks one token ahead. used for LL(1)
+        """
         try:
             return self.tknz.all_tokens[self.tknz.token_count + 1]
         except IndexError:
-            return -1  # no more values, end of token list.
+            return -1  # no more values, end of token list
 
     def cmp_subroutine_dec(self):
         self.file.write('<subroutineDec>\n')
@@ -194,7 +205,7 @@ class CompilationEngine:
 
         :return:
         """
-        self.file.write("<subroutineBody>")
+        self.file.write("<subroutineBody>\n")
         self.file.write(self.tknz.symbol())  # "{"
         while self.peek() == "var":  # has more method variables
             self.tknz.advance()
@@ -202,7 +213,7 @@ class CompilationEngine:
         self.tknz.advance()
         self.cmp_statement()
         self.file.write(self.tknz.symbol())  # "}"
-        self.file.write("</subroutineBody>")
+        self.file.write("</subroutineBody>\n")
 
     def cmp_var_dec(self):
         self.file.write('<varDec>\n')
@@ -465,7 +476,9 @@ class JackAnalyzer:
         else:
             self.tknz = Tokenizer(self.file_path)
             self.engine = CompilationEngine(self.file_path, self.tknz)
-            self.engine.cmp_class()
+            self.tknz.advance()
+            self.engine.cmp_class_var_dec()
+            #self.engine.cmp_class()
 
 
 if __name__ == "__main__":
