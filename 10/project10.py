@@ -6,18 +6,7 @@ class Tokenizer:
     def __init__(self, input_file):
         self.input_file = open(input_file)
         self.lines = []
-        for line in self.input_file.readlines():
-            space_count = 0
-            for letter in line:
-                if letter == ' ':
-                    space_count += 1
-                else:
-                    line = line[space_count:]
-                    break
-            if '/' == line[0] or '\n' == line[0] or '*' == line.split(' ')[0] \
-                    or '/**' in line:
-                continue
-            self.lines.append(line.split('//')[0])
+        self.clean_lines()
         self.all_tokens = []
         self.curr_token = None
         self.token_count = -1
@@ -45,22 +34,39 @@ class Tokenizer:
 
              }
         self.get_all_tokens()
+        print(self.all_tokens)
+        self.op = {"+", "-", "*", "/", "&", "|", "<", ">", "="}
+
+    def clean_lines(self):
+        for line in self.input_file.readlines():
+            space_count = 0
+            for letter in line:
+                if letter == ' ':
+                    space_count += 1
+                else:
+                    line = line[space_count:]
+                    break
+            if '/' == line[0] or '\n' == line[0] or '*' == line.split(' ')[0] \
+                    or '/**' in line:
+                continue
+            self.lines.append(line.split('//')[0])
 
     def get_all_tokens(self):
         for line in self.lines:
-            l = 0
-            r = 0
+            left = 0
+            right = 0
             for letter in line:
+
                 if letter not in self.types:
-                    r += 1
+                    right += 1
                 else:
-                    if r != l:
-                        self.all_tokens.append(line[l:r])
-                    sign = line[r:r + 1]
+                    if right != left:
+                        self.all_tokens.append(line[left:right])
+                    sign = line[right:right + 1]
                     if sign != ' ':
                         self.all_tokens.append(sign)
-                    l = r + 1
-                    r = r + 1
+                    left = right + 1
+                    right = right + 1
                 continue
 
     def has_more_tokens(self):
@@ -75,7 +81,7 @@ class Tokenizer:
     def token_type(self):
         if self.curr_token.isdigit():
             return 'integerConstant'
-        elif " \" " in self.curr_token:
+        elif self.curr_token.startswith("\""):
             return 'stringConstant'
         elif self.curr_token in self.types:
             return self.types[self.curr_token]
@@ -95,7 +101,7 @@ class Tokenizer:
         return '<integerConstant> ' + self.curr_token + ' </integerConstant>\n'
 
     def string_val(self):
-        return '<stringConstant> ' + self.curr_token + ' </stringConstant>\n'
+        return '<stringConstant> ' + self.curr_token[1:-1] + ' </stringConstant>\n'
 
 
 class CompilationEngine:
@@ -236,49 +242,75 @@ class CompilationEngine:
 
     def cmp_expression(self):
         self.file.write("<expression>\n")
+        while self.tknz.curr_token in self.tknz.op:
+            self.tknz.advance()
+            self.cmp_term()
 
         self.file.write("</expression>\n")
 
     def cmp_term(self):
         tType = self.tknz.token_type()
-        self.file.write("<term>")
-        if tType in ["integerConstant", "stringConstant"]:
-            self.file.write(
-                "<" + tType + "> " + self.tknz.curr_token + " </" + tType + ">")
+        nextT = self.peek()
+        self.file.write("<term>\n")
+        if tType == "integerConstant":
+            self.file.write(self.tknz.int_val())
+            if self.tknz.curr_token in self.tknz.op:
+                self.file.write(self.tknz.symbol())
+
+        elif tType == "stringConstant":
+            if not self.tknz.curr_token.endswith("\""):
+                temp = self.__get_whole_str(self.tknz.curr_token)
+                self.tknz.curr_token = temp
+            self.file.write(self.tknz.string_val())
+
+            if self.tknz.curr_token in self.tknz.op:
+                self.file.write(self.tknz.symbol())
+
         elif tType == "KEYWORD":
             self.tknz.keyword()
         elif tType == "IDENTIFIER":
-            nextT = self.peek()
-            self.tknz.identifier()
+            self.file.write(self.tknz.identifier())
             self.tknz.advance()
+            if self.tknz.curr_token in self.tknz.op:
+                self.file.write(self.tknz.symbol())
             if nextT == "[":
                 self.term_helper(self.cmp_expression())
             elif nextT == "(":
                 self.term_helper(self.cmp_expression_lst())
             elif nextT == ".":
-                self.tknz.symbol()  # .
+                self.file.write(self.tknz.symbol())  # .
                 self.tknz.advance()
-                self.tknz.symbol()  # (
+                self.file.write(self.tknz.symbol())  # (
                 self.cmp_expression_lst()
                 self.tknz.advance()
-                self.tknz.symbol()  # )
+                self.file.write(self.tknz.symbol())  # )
         elif tType == "SYMBOL":
             self.term_helper(self.cmp_expression())
         else:
-            self.tknz.symbol()
+            self.file.write(self.tknz.symbol())
             self.cmp_term()
-        self.file.write("</term>")
+        self.file.write("</term>\n")
 
     def term_helper(self, func):
-        self.tknz.symbol()  # [
+        self.file.write(self.tknz.symbol())  # [
         self.tknz.advance()
         func()
         self.tknz.advance()
-        self.tknz.symbol()  # ]
+        self.file.write(self.tknz.symbol())  # ]
 
     def cmp_expression_lst(self):
         pass
 
+    def __get_whole_str(self, temp_str):
+        """
+
+        :param temp_str:
+        :return:
+        """
+        while not self.tknz.curr_token.endswith("\""):
+            self.tknz.advance()
+            temp_str += " " + self.tknz.curr_token
+        return temp_str
 
 class JackAnalyzer:
     def __init__(self, jack_file):
