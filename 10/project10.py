@@ -38,6 +38,9 @@ class Tokenizer:
         self.key_const = {"true", "false", "null", "this"}
 
     def clean_lines(self):
+        """
+        cleans each line, removing spaces and in line comments.
+        """
         for line in self.input_file.readlines():
             space_count = 0
             for letter in line:
@@ -52,6 +55,9 @@ class Tokenizer:
             self.lines.append(line.split('//')[0])
 
     def get_all_tokens(self):
+        """
+        breaks all lines into tokens for further use.
+        """
         for line in self.lines:
             left = 0
             right = 0
@@ -71,15 +77,25 @@ class Tokenizer:
                 continue
 
     def has_more_tokens(self):
+        """
+        checks if all tokens have been checked and compiled.
+        :return: false if we are done, true otherwise.
+        """
         if self.token_count == len(self.all_tokens) - 1:
             return False
         return True
 
     def advance(self):
+        """
+        moves on to the next token.
+        """
         self.token_count += 1
         self.curr_token = self.all_tokens[self.token_count]
 
     def token_type(self):
+        """
+        gets the token type.
+        """
         if self.curr_token.isdigit():
             return 'integerConstant'
         elif self.curr_token.startswith("\""):
@@ -90,18 +106,41 @@ class Tokenizer:
             return 'IDENTIFIER'
 
     def keyword(self):
+        """
+        :return: an in format xml line.
+        """
         return '<keyword> ' + self.curr_token + ' </keyword>\n'
 
     def symbol(self):
+        """
+        :return: an in format xml line.
+        """
+        if self.curr_token == ">":
+            self.curr_token = "&gt"
+        elif self.curr_token == "<":
+            self.curr_token = "&lt"
+        elif self.curr_token == "&":
+            self.curr_token = "&amp"
+        elif self.curr_token == "\'":
+            self.curr_token = "&quot"
         return '<symbol> ' + self.curr_token + ' </symbol>\n'
 
     def identifier(self):
+        """
+        :return: an in format xml line.
+        """
         return '<identifier> ' + self.curr_token + ' </identifier>\n'
 
     def int_val(self):
+        """
+        :return: an in format xml line.
+        """
         return '<integerConstant> ' + self.curr_token + ' </integerConstant>\n'
 
     def string_val(self):
+        """
+        :return: an in format xml line.
+        """
         return '<stringConstant> ' + self.curr_token[1:-1] + ' </stringConstant>\n'
 
 
@@ -184,6 +223,9 @@ class CompilationEngine:
         self.file.write('</subroutineDec>\n')
 
     def cmp_param_lst(self):
+        """
+        compiles the parameter list for a given method, separated by commas.
+        """
         self.file.write('<parameterList>\n')
         if self.peek() == ')':
             self.file.write('</parameterList>\n')
@@ -202,8 +244,8 @@ class CompilationEngine:
 
     def cmp_subroutine_body(self):
         """
-
-        :return:
+        compiles an entire subroutine body, including method variables and
+        and inner statements.
         """
         self.file.write("<subroutineBody>\n")
         self.file.write(self.tknz.symbol())  # "{"
@@ -216,6 +258,9 @@ class CompilationEngine:
         self.file.write("</subroutineBody>\n")
 
     def cmp_var_dec(self):
+        """
+        compiles variable decelerations in methods.
+        """
         self.file.write('<varDec>\n')
         self.file.write(self.tknz.keyword())
         self.tknz.advance()
@@ -236,19 +281,19 @@ class CompilationEngine:
 
     def cmp_statement(self):
         """
-
-        :return:
+        compiles a given set of statements, handles all different kinds of
+        statements according to the api.
         """
         self.file.write("<statements>\n")
-        while self.tknz.curr_token != "}":
+        while self.tknz.curr_token != "}":  # checks if more statements exist.
             self.__cmp_stat_helper()
             self.tknz.advance()
         self.file.write("</statements>\n")
 
     def __cmp_stat_helper(self):
         """
-
-        :return:
+        an helper method which filters the current statement and calles fitting
+        method.
         """
         curr_statement = self.tknz.curr_token
         if curr_statement == "do":
@@ -263,6 +308,9 @@ class CompilationEngine:
             self.cmp_if()
 
     def cmp_let(self):
+        """
+        compiles a let statement.
+        """
         self.file.write('<letStatement>\n')
         self.file.write(self.tknz.keyword())
         self.tknz.advance()
@@ -280,6 +328,9 @@ class CompilationEngine:
         self.file.write('</letStatement>\n')
 
     def cmp_if(self):
+        """
+        compiles an 'if' statement.
+        """
         self.file.write("<ifStatement>\n")
         self.file.write(self.tknz.keyword())  # writes 'if'
         self.tknz.advance()
@@ -351,10 +402,9 @@ class CompilationEngine:
 
     def cmp_expression(self):
         """
-
-        :return:
+        compiles an expression, supports complex expressions.
         """
-        self.file.write("<expression>\n")
+        self.file.write("<expression>\n")  #
         self.cmp_term()
         while self.tknz.curr_token in self.tknz.op:
             self.file.write(self.tknz.symbol())
@@ -364,8 +414,7 @@ class CompilationEngine:
 
     def cmp_term(self):
         """
-
-        :return:
+        breaks each expression down into term and compiles them accordingly.
         """
         tType = self.tknz.token_type()
         nextT = self.peek()
@@ -375,13 +424,10 @@ class CompilationEngine:
             self.tknz.advance()  # advances to ';'
 
         elif tType == "stringConstant":
-            if not self.tknz.curr_token.endswith("\""):
+            if not self.tknz.curr_token.endswith("\""): # checks for str const
                 temp = self.__get_whole_str(self.tknz.curr_token)
-                self.tknz.curr_token = temp
+                self.tknz.curr_token = temp  # whole string const with spaces
             self.file.write(self.tknz.string_val())
-
-            if self.tknz.curr_token in self.tknz.op:
-                self.file.write(self.tknz.symbol())
 
         elif tType in self.tknz.key_const:
             self.file.write("<keywordConstant> " + self.tknz.curr_token +
@@ -466,7 +512,7 @@ class JackAnalyzer:
     def main(self):
         if os.path.isdir(self.file_path):
             path = self.file_path
-            name = os.path.basename(path) + '.xml'
+            name = os.path.basename(path) +"1"+ '.xml'
             file_list = [file for file in os.listdir(self.file_path)
                          if ".jack" in file]
             for item in file_list:
@@ -476,9 +522,7 @@ class JackAnalyzer:
         else:
             self.tknz = Tokenizer(self.file_path)
             self.engine = CompilationEngine(self.file_path, self.tknz)
-            self.tknz.advance()
-            self.engine.cmp_class_var_dec()
-            #self.engine.cmp_class()
+            self.engine.cmp_class()
 
 
 if __name__ == "__main__":
