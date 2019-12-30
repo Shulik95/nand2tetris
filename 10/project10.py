@@ -381,8 +381,9 @@ class CompilationEngine:
         self.file.write(self.tknz.identifier())  # print subroutine or class name
         nextT = self.peek()
         self.subRoutineCall(nextT)
-        self.tknz.advance()
-        self.file.write(self.tknz.symbol())
+        self.file.write(self.tknz.symbol())  # compiles ;
+        # self.tknz.advance()
+        # self.file.write(self.tknz.symbol())
         self.file.write("</doStatement>\n")
 
     def cmp_return(self):
@@ -435,7 +436,7 @@ class CompilationEngine:
             self.tknz.advance()
         elif tType == "IDENTIFIER":
             self.file.write(self.tknz.identifier())
-            self.tknz.advance()
+            #self.tknz.advance()
             if nextT == "[":
                 self.term_helper(self.cmp_expression)
             self.subRoutineCall(nextT)
@@ -457,14 +458,17 @@ class CompilationEngine:
             self.term_helper(self.cmp_expression_lst)
 
         elif nextT == ".":
+            self.tknz.advance()
             self.file.write(self.tknz.symbol())  # .
             self.tknz.advance()
             self.file.write(self.tknz.identifier())  # writes subroutine name
             self.tknz.advance()
             self.file.write(self.tknz.symbol())  # (
-            self.cmp_expression_lst()
             self.tknz.advance()
+            self.cmp_expression_lst()
             self.file.write(self.tknz.symbol())  # )
+            self.tknz.advance()  # ;
+            #self.file.write(self.tknz.symbol())  # ;
 
     def term_helper(self, func):
         """
@@ -512,7 +516,7 @@ class JackAnalyzer:
     def main(self):
         if os.path.isdir(self.file_path):
             path = self.file_path
-            name = os.path.basename(path) +"1"+ '.xml'
+            name = os.path.basename(path) + '.xml'
             file_list = [file for file in os.listdir(self.file_path)
                          if ".jack" in file]
             for item in file_list:
@@ -522,7 +526,9 @@ class JackAnalyzer:
         else:
             self.tknz = Tokenizer(self.file_path)
             self.engine = CompilationEngine(self.file_path, self.tknz)
-            self.engine.cmp_class()
+            self.tknz.advance()
+            self.engine.cmp_subroutine_dec()
+            #self.engine.cmp_class()
 
 
 if __name__ == "__main__":
