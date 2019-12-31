@@ -33,7 +33,6 @@ class Tokenizer:
              'while': 'KEYWORD', 'return': 'KEYWORD',
              }
         self.get_all_tokens()
-        print(self.all_tokens)
         self.op = {"+", "-", "*", "/", "&", "|", "<", ">", "="}
         self.key_const = {"true", "false", "null", "this"}
 
@@ -42,6 +41,8 @@ class Tokenizer:
         cleans each line, removing spaces and in line comments.
         """
         for line in self.input_file.readlines():
+            if "\t" in line:
+                line = line.replace("\t", '')
             space_count = 0
             for letter in line:
                 if letter == ' ':
@@ -50,7 +51,7 @@ class Tokenizer:
                     line = line[space_count:]
                     break
             if '/' == line[0] or '\n' == line[0] or '*' == line.split(' ')[0] \
-                    or '/**' in line:
+                    or '/**' in line or "*" == line[0]:  # lines doesnt contain code
                 continue
             self.lines.append(line.split('//')[0])
 
@@ -116,13 +117,13 @@ class Tokenizer:
         :return: an in format xml line.
         """
         if self.curr_token == ">":
-            self.curr_token = "&gt"
+            self.curr_token = "&gt;"
         elif self.curr_token == "<":
-            self.curr_token = "&lt"
+            self.curr_token = "&lt;"
         elif self.curr_token == "&":
-            self.curr_token = "&amp"
+            self.curr_token = "&amp;"
         elif self.curr_token == "\'":
-            self.curr_token = "&quot"
+            self.curr_token = "&quot;"
         return '<symbol> ' + self.curr_token + ' </symbol>\n'
 
     def identifier(self):
@@ -318,6 +319,7 @@ class CompilationEngine:
         if self.peek() == '[':
             self.tknz.advance()
             self.file.write(self.tknz.symbol())  # [
+            self.tknz.advance()
             self.cmp_expression()
             self.file.write(self.tknz.symbol())  # ]
         self.tknz.advance()
@@ -381,9 +383,8 @@ class CompilationEngine:
         self.file.write(self.tknz.identifier())  # print subroutine or class name
         nextT = self.peek()
         self.subRoutineCall(nextT)
+        self.tknz.advance()
         self.file.write(self.tknz.symbol())  # compiles ;
-        # self.tknz.advance()
-        # self.file.write(self.tknz.symbol())
         self.file.write("</doStatement>\n")
 
     def cmp_return(self):
@@ -425,27 +426,28 @@ class CompilationEngine:
             self.tknz.advance()  # advances to ';'
 
         elif tType == "stringConstant":
-            if not self.tknz.curr_token.endswith("\""): # checks for str const
+            if not self.tknz.curr_token.endswith("\""):  # checks for str const
                 temp = self.__get_whole_str(self.tknz.curr_token)
                 self.tknz.curr_token = temp  # whole string const with spaces
             self.file.write(self.tknz.string_val())
-
-        elif tType in self.tknz.key_const:
-            self.file.write("<keywordConstant> " + self.tknz.curr_token +
-                            " </keywordConstant>")
             self.tknz.advance()
         elif tType == "IDENTIFIER":
             self.file.write(self.tknz.identifier())
-            #self.tknz.advance()
             if nextT == "[":
+                self.tknz.advance()
                 self.term_helper(self.cmp_expression)
             self.subRoutineCall(nextT)
+            self.tknz.advance()
         elif tType == "SYMBOL":
             self.term_helper(self.cmp_expression)
+            if self.tknz.curr_token in ["-", "~"]:  # unary op ahead
+                self.tknz.advance()
+                self.cmp_term()
+            else:
+                self.tknz.advance()
+        elif tType == "KEYWORD":
+            self.file.write(self.tknz.keyword())
             self.tknz.advance()
-        else:
-            self.file.write(self.tknz.symbol())
-            self.cmp_term()
         self.file.write("</term>\n")
 
     def subRoutineCall(self, nextT):
@@ -467,19 +469,17 @@ class CompilationEngine:
             self.tknz.advance()
             self.cmp_expression_lst()
             self.file.write(self.tknz.symbol())  # )
-            self.tknz.advance()  # ;
-            #self.file.write(self.tknz.symbol())  # ;
 
     def term_helper(self, func):
         """
         a helper method for term compiling
         :param func: a function which writes a specific part of code
         """
-
         self.file.write(self.tknz.symbol())  # [ / (
-        self.tknz.advance()
-        func()
-        self.file.write(self.tknz.symbol())  # ] / )
+        if self.tknz.curr_token not in ["-", "~"]:  # unary op ahead
+            self.tknz.advance()
+            func()
+            self.file.write(self.tknz.symbol())  # ] / )
 
     def cmp_expression_lst(self):
         """
@@ -508,6 +508,11 @@ class CompilationEngine:
 
 
 class JackAnalyzer:
+    """
+    The main class of the program. for each .jack file we create a tokenizer
+    and CompileEngine and compile the file. a XML file with the compiled
+    file name will be outputted.
+    """
     def __init__(self, jack_file):
         self.file_path = jack_file
         self.engine = None
@@ -516,19 +521,17 @@ class JackAnalyzer:
     def main(self):
         if os.path.isdir(self.file_path):
             path = self.file_path
-            name = os.path.basename(path) + '.xml'
+
             file_list = [file for file in os.listdir(self.file_path)
                          if ".jack" in file]
             for item in file_list:
-                self.tknz = Tokenizer(item)
-                self.engine = CompilationEngine(name, self.tknz)
+                self.tknz = Tokenizer(path + '/' + item)
+                self.engine = CompilationEngine(path + '/' + item, self.tknz)
                 self.engine.cmp_class()
         else:
             self.tknz = Tokenizer(self.file_path)
             self.engine = CompilationEngine(self.file_path, self.tknz)
-            self.tknz.advance()
-            self.engine.cmp_subroutine_dec()
-            #self.engine.cmp_class()
+            self.engine.cmp_class()
 
 
 if __name__ == "__main__":
