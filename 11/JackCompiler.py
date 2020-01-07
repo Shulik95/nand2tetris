@@ -94,6 +94,7 @@ class VMWriter:
     This class writes VM commands into a file. It encapsulates the VM
     command syntax.
     """
+
     def __init__(self, outputFile):
         """
         Creates a new file and prepares for writing VM commands.
@@ -141,4 +142,22 @@ class VMWriter:
         """
         Writes a VM call command.
         """
-        self.file.write("call")
+        self.file.write("call " + name + " " + " " + str(nArgs) + "\n")
+
+    def writeFunction(self, name, nLocals):
+        """
+        Writes a VM function command.
+        """
+        self.file.write("function " + name + " " + str(nLocals) + "\n")
+
+    def writeReturn(self):
+        """
+        Writes a VM return command.
+        """
+        self.file.write("return\n")
+
+    def close(self):
+        """
+        Closes the output file.
+        """
+        self.file.close()
