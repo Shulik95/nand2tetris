@@ -87,3 +87,58 @@ class SymbolTable:
             return self.curr_scope[name][2]
         elif name in self.class_level:
             return self.class_level[name][2]
+
+
+class VMWriter:
+    """
+    This class writes VM commands into a file. It encapsulates the VM
+    command syntax.
+    """
+    def __init__(self, outputFile):
+        """
+        Creates a new file and prepares for writing VM commands.
+        :param outputFile: name of output file
+        """
+        self.file = open(outputFile, 'w')
+
+    def writePush(self, segment, index):
+        """
+        Writes a VM pop command.
+        """
+        self.file.write("push " + segment + " " + str(index) + "\n")
+
+    def writePop(self, segment, index):
+        """
+        Write a VM pop command.
+        """
+        self.file.write("pop " + segment + " " + str(index) + "\n")
+
+    def writeArithmetic(self, command):
+        """
+        Writes a VM arithmetic command.
+        """
+        self.file.write(command + "\n")
+
+    def writeLabel(self, label):
+        """
+        Writes a VM label command.
+        """
+        self.file.write("label " + label + "\n")
+
+    def writeGoto(self, label):
+        """
+        writes a VM goto command.
+        """
+        self.file.write("goto " + label + "\n")
+
+    def writeIf(self, label):
+        """
+        Writes a VM if-goto command.
+        """
+        self.file.write("if-goto " + label + "\n")
+
+    def writeCall(self, name, nArgs):
+        """
+        Writes a VM call command.
+        """
+        self.file.write("call")
