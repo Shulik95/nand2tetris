@@ -1,6 +1,5 @@
 import os
 import sys
-from JackCompiler import SymbolTable as st
 
 
 class Tokenizer:
@@ -131,6 +130,7 @@ class Tokenizer:
         """
         :return: an in format xml line.
         """
+
         return '<identifier> ' + self.curr_token + ' </identifier>\n'
 
     def int_val(self):

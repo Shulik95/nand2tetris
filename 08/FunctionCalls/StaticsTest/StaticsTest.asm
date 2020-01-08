@@ -68,7 +68,7 @@ M=M+1
 M=M-1
 A=M
 D=M
-@Class1.0
+@StaticsT.0
 M=D
 // writing:C_PUSH argument 1
 @1
@@ -86,7 +86,7 @@ M=M+1
 M=M-1
 A=M
 D=M
-@Class1.1
+@StaticsT.1
 M=D
 // writing:C_PUSH constant 0
 @0
@@ -166,7 +166,7 @@ A=M
 // writing function: Class1.get
 (Class1.get)
 // writing:C_PUSH static 0
-@Class1.0
+@StaticsT.0
 D=M
 @SP
 A=M
@@ -174,7 +174,7 @@ M=D
 @SP
 M=M+1
 // writing:C_PUSH static 1
-@Class1.1
+@StaticsT.1
 D=M
 @SP
 A=M
@@ -277,7 +277,7 @@ M=M+1
 M=M-1
 A=M
 D=M
-@Class2.0
+@StaticsT.0
 M=D
 // writing:C_PUSH argument 1
 @1
@@ -295,7 +295,7 @@ M=M+1
 M=M-1
 A=M
 D=M
-@Class2.1
+@StaticsT.1
 M=D
 // writing:C_PUSH constant 0
 @0
@@ -375,7 +375,7 @@ A=M
 // writing function: Class2.get
 (Class2.get)
 // writing:C_PUSH static 0
-@Class2.0
+@StaticsT.0
 D=M
 @SP
 A=M
@@ -383,7 +383,7 @@ M=D
 @SP
 M=M+1
 // writing:C_PUSH static 1
-@Class2.1
+@StaticsT.1
 D=M
 @SP
 A=M
