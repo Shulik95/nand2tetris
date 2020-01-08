@@ -158,6 +158,7 @@ class VMWriter:
         """
         Writes a VM return command.
         """
+        self.writePush("constant", 0)
         self.file.write("return\n")
 
     def close(self):
@@ -198,7 +199,8 @@ class Tokenizer:
              'while': 'KEYWORD', 'return': 'KEYWORD',
              }
         self.get_all_tokens()
-        self.op = {"+", "-", "*", "/", "&", "|", "<", ">", "="}
+        self.un_op = {"-", "~"}
+        self.bin_op = {"+", "*", "/", "&", "|", "<", ">", "="}
         self.key_const = {"true", "false", "null", "this"}
 
     def clean_lines(self):
@@ -318,6 +320,7 @@ class CompilationEngine:
         self.symbol = SymbolTable()
         self.className = ""
         self.methodName = ""
+        self.op_lst = []
 
     def cmp_class(self):
         """
@@ -372,16 +375,19 @@ class CompilationEngine:
         self.symbol.startSubroutine()  # reset lower level table.
         self.tknz.advance()  # "("
         if func_type == "constructor":
-            self.VMW.writeFunction(self.methodName, 0)
+            self.VMW.writeFunction(self.className + "." + self.methodName, 0)
             self.cmp_param_lst()  # adds arguments to table
             self.VMW.writePush("constant", self.symbol.varCount("field"))
             self.VMW.writeCall("Memory.alloc", 1)
+            self.VMW.writePop("pointer", 0)  # assigns object to "this"
         elif func_type == "method":
-            self.VMW.writeFunction(self.methodName, self.symbol.varCount("arg"))
+            self.VMW.writeFunction(self.className + "." + self.methodName, self.symbol.varCount("arg"))
             self.symbol.define("this", self.className, "arg")  # adds obj reference
             self.cmp_param_lst()  # adds arguments to table
             self.VMW.writePush("argument", 0)  # pushes the object to stack
-        self.VMW.writePop("pointer", 0)  # assigns object to "this"
+            self.VMW.writePop("pointer", 0)  # assigns object to "this"
+        else:
+            self.VMW.writeFunction(self.className + "." + self.methodName, self.symbol.varCount("arg"))  # function
         self.tknz.advance()  # ")"
         self.cmp_subroutine_body()
 
@@ -410,10 +416,10 @@ class CompilationEngine:
         """
         while self.peek() == "var":  # if subroutine vars exist, add to table.
             self.cmp_var_dec()
+        if self.peek() != "var":
+            self.tknz.advance()
         self.tknz.advance()
         self.cmp_statement()
-        self.file.write(self.tknz.symbol())  # "}"
-        self.file.write("</subroutineBody>\n")
 
     def cmp_var_dec(self):
         """
@@ -442,222 +448,242 @@ class CompilationEngine:
         while self.tknz.curr_token != "}":  # checks if more statements exist.
             self.__cmp_stat_helper()
             self.tknz.advance()
-        
-    #
-    # def __cmp_stat_helper(self):
-    #     """
-    #     an helper method which filters the current statement and calles fitting
-    #     method.
-    #     """
-    #     curr_statement = self.tknz.curr_token
-    #     if curr_statement == "do":
-    #         self.cmp_do()
-    #     elif curr_statement == "let":
-    #         self.cmp_let()
-    #     elif curr_statement == "while":
-    #         self.cmp_while()
-    #     elif curr_statement == "return":
-    #         self.cmp_return()
-    #     else:
-    #         self.cmp_if()
-    #
-    # def cmp_let(self):
-    #     """
-    #     compiles a let statement.
-    #     """
-    #     self.file.write('<letStatement>\n')
-    #     self.file.write(self.tknz.keyword())
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.identifier())
-    #     if self.peek() == '[':
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.symbol())  # [
-    #         self.tknz.advance()
-    #         self.cmp_expression()
-    #         self.file.write(self.tknz.symbol())  # ]
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.symbol())  # =
-    #     self.tknz.advance()
-    #     self.cmp_expression()
-    #     self.file.write(self.tknz.symbol())  # ;
-    #     self.file.write('</letStatement>\n')
-    #
-    # def cmp_if(self):
-    #     """
-    #     compiles an 'if' statement.
-    #     """
-    #     self.file.write("<ifStatement>\n")
-    #     self.file.write(self.tknz.keyword())  # writes 'if'
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.symbol())  # (
-    #     self.tknz.advance()
-    #     self.cmp_expression()
-    #     self.file.write(self.tknz.symbol())  # )
-    #     self.__brack_and_statment()
-    #
-    #     if self.peek() == "else":
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.keyword())  # writes else
-    #         self.__brack_and_statment()
-    #
-    #     self.file.write("</ifStatement>\n")
-    #
-    # def __brack_and_statment(self):
-    #     """
-    #     helper method for repating lines of code during if statements
-    #     """
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.symbol())  # {
-    #     self.tknz.advance()
-    #     self.cmp_statement()
-    #     self.file.write(self.tknz.symbol())  # }
-    #
-    # def cmp_while(self):
-    #     """
-    #     compiles a while statement.
-    #     """
-    #     self.file.write("<whileStatement>\n")
-    #     self.file.write(self.tknz.keyword())  # writes 'while'
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.symbol())  # (
-    #     self.tknz.advance()
-    #     self.cmp_expression()
-    #     self.file.write(self.tknz.symbol())  # )
-    #     self.__brack_and_statment()
-    #     self.file.write("</whileStatement>\n")
-    #
-    # def cmp_do(self):
-    #     """
-    #     compiles do statements.
-    #     """
-    #     self.file.write("<doStatement>\n")
-    #     self.file.write(self.tknz.keyword())
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.identifier())  # print subroutine or class name
-    #     nextT = self.peek()
-    #     self.subRoutineCall(nextT)
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.symbol())  # compiles ;
-    #     self.file.write("</doStatement>\n")
-    #
-    # def cmp_return(self):
-    #     """
-    #     compiles a return statement, handles both cases. with expressions or
-    #     expressionless.
-    #     """
-    #     self.file.write("<returnStatement>\n")
-    #     self.file.write(self.tknz.keyword())  # writes 'return'
-    #     if self.peek() != ";":  # has expressions
-    #         self.tknz.advance()
-    #         self.cmp_expression()
-    #     else:  # no expressions
-    #         self.tknz.advance()
-    #     self.file.write(self.tknz.symbol())
-    #     self.file.write("</returnStatement>\n")
-    #
-    # def cmp_expression(self):
-    #     """
-    #     compiles an expression, supports complex expressions.
-    #     """
-    #     self.file.write("<expression>\n")  #
-    #     self.cmp_term()
-    #     while self.tknz.curr_token in self.tknz.op:
-    #         self.file.write(self.tknz.symbol())
-    #         self.tknz.advance()
-    #         self.cmp_term()
-    #     self.file.write("</expression>\n")
-    #
-    # def cmp_term(self):
-    #     """
-    #     breaks each expression down into term and compiles them accordingly.
-    #     """
-    #     tType = self.tknz.token_type()
-    #     nextT = self.peek()
-    #     self.file.write("<term>\n")
-    #     if tType == "integerConstant":
-    #         self.file.write(self.tknz.int_val())  # writes integer
-    #         self.tknz.advance()  # advances to ';'
-    #
-    #     elif tType == "stringConstant":
-    #         if not self.tknz.curr_token.endswith("\""):  # checks for str const
-    #             temp = self.__get_whole_str(self.tknz.curr_token)
-    #             self.tknz.curr_token = temp  # whole string const with spaces
-    #         self.file.write(self.tknz.string_val())
-    #         self.tknz.advance()
-    #     elif tType == "IDENTIFIER":
-    #         self.file.write(self.tknz.identifier())
-    #         if nextT == "[":
-    #             self.tknz.advance()
-    #             self.term_helper(self.cmp_expression)
-    #         self.subRoutineCall(nextT)
-    #         self.tknz.advance()
-    #     elif tType == "SYMBOL":
-    #         self.term_helper(self.cmp_expression)
-    #         if self.tknz.curr_token in ["-", "~"]:  # unary op ahead
-    #             self.tknz.advance()
-    #             self.cmp_term()
-    #         else:
-    #             self.tknz.advance()
-    #     elif tType == "KEYWORD":
-    #         self.file.write(self.tknz.keyword())
-    #         self.tknz.advance()
-    #     self.file.write("</term>\n")
-    #
-    # def subRoutineCall(self, nextT):
-    #     """
-    #     compiles a subroutine call
-    #     :param nextT: the next token, helps determine which case were in.
-    #     """
-    #     if nextT == "(":
-    #         self.tknz.advance()
-    #         self.term_helper(self.cmp_expression_lst)
-    #
-    #     elif nextT == ".":
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.symbol())  # .
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.identifier())  # writes subroutine name
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.symbol())  # (
-    #         self.tknz.advance()
-    #         self.cmp_expression_lst()
-    #         self.file.write(self.tknz.symbol())  # )
-    #
-    # def term_helper(self, func):
-    #     """
-    #     a helper method for term compiling
-    #     :param func: a function which writes a specific part of code
-    #     """
-    #     self.file.write(self.tknz.symbol())  # [ / (
-    #     if self.tknz.curr_token not in ["-", "~"]:  # unary op ahead
-    #         self.tknz.advance()
-    #         func()
-    #         self.file.write(self.tknz.symbol())  # ] / )
-    #
-    # def cmp_expression_lst(self):
-    #     """
-    #     compiles a list of expressions, separated by commas.
-    #     """
-    #     self.file.write("<expressionList>\n")
-    #     if self.tknz.curr_token != ")":
-    #         while True:
-    #             self.cmp_expression()  # compiles expression
-    #             if self.tknz.curr_token == ")":  # done with exp list
-    #                 break
-    #             self.file.write(self.tknz.symbol())  # compiles either ',' or ')' if done
-    #             self.tknz.advance()
-    #     self.file.write("</expressionList>\n")
-    #
-    # def __get_whole_str(self, temp_str):
-    #     """
-    #     a helper method for cases which contain string constants with spaces
-    #     :param temp_str: the current part of the string.
-    #     :return: the full string const, with spaces.
-    #     """
-    #     while not self.tknz.curr_token.endswith("\""):
-    #         self.tknz.advance()
-    #         temp_str += " " + self.tknz.curr_token
-    #     return temp_str
+
+    def __cmp_stat_helper(self):
+        """
+        an helper method which filters the current statement and calles fitting
+        method.
+        """
+        curr_statement = self.tknz.curr_token
+        if curr_statement == "do":
+            self.cmp_do()
+        elif curr_statement == "let":
+            self.cmp_let()
+        elif curr_statement == "while":
+            self.cmp_while()
+        elif curr_statement == "return":
+            self.cmp_return()
+        else:
+            self.cmp_if()
+
+    def cmp_let(self):
+        """
+        compiles a let statement.
+        """
+        self.file.write('<letStatement>\n')
+        self.file.write(self.tknz.keyword())
+        self.tknz.advance()
+        self.file.write(self.tknz.identifier())
+        if self.peek() == '[':
+            self.tknz.advance()
+            self.file.write(self.tknz.symbol())  # [
+            self.tknz.advance()
+            self.cmp_expression()
+            self.file.write(self.tknz.symbol())  # ]
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol())  # =
+        self.tknz.advance()
+        self.cmp_expression()
+        self.file.write(self.tknz.symbol())  # ;
+        self.file.write('</letStatement>\n')
+
+    def cmp_if(self):
+        """
+        compiles an 'if' statement.
+        """
+        self.file.write("<ifStatement>\n")
+        self.file.write(self.tknz.keyword())  # writes 'if'
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol())  # (
+        self.tknz.advance()
+        self.cmp_expression()
+        self.file.write(self.tknz.symbol())  # )
+        self.__brack_and_statment()
+
+        if self.peek() == "else":
+            self.tknz.advance()
+            self.file.write(self.tknz.keyword())  # writes else
+            self.__brack_and_statment()
+
+        self.file.write("</ifStatement>\n")
+
+    def __brack_and_statment(self):
+        """
+        helper method for repating lines of code during if statements
+        """
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol())  # {
+        self.tknz.advance()
+        self.cmp_statement()
+        self.file.write(self.tknz.symbol())  # }
+
+    def cmp_while(self):
+        """
+        compiles a while statement.
+        """
+        self.file.write("<whileStatement>\n")
+        self.file.write(self.tknz.keyword())  # writes 'while'
+        self.tknz.advance()
+        self.file.write(self.tknz.symbol())  # (
+        self.tknz.advance()
+        self.cmp_expression()
+        self.file.write(self.tknz.symbol())  # )
+        self.__brack_and_statment()
+        self.file.write("</whileStatement>\n")
+
+    def cmp_do(self):
+        """
+        compiles do statements.
+        """
+        self.tknz.advance()
+        # print subroutine or class name
+        nextT = self.peek()
+        self.subRoutineCall(nextT)  # curr = ";"
+        self.VMW.writePop("temp", 0)
+
+    def cmp_return(self):
+        """
+        compiles a return statement, handles both cases. with expressions or
+        expressionless.
+        """
+        if self.peek() != ";":  # has expressions
+            self.tknz.advance()
+            self.cmp_expression()
+        else:  # no expressions
+            self.tknz.advance()
+        self.VMW.writeReturn()
+
+    def cmp_expression(self):
+        """
+        compiles an expression, supports complex expressions.
+        """
+        self.cmp_term()
+        while self.tknz.curr_token in self.tknz.bin_op:
+            op = self.tknz.curr_token
+            if op == '+':
+                self.op_lst.append('add')
+            elif op == '-':
+                self.op_lst.append('sub')
+            elif op == '|':
+                self.op_lst.append('or')
+            elif op == '&':
+                self.op_lst.append('and')
+            elif op == '=':
+                self.op_lst.append('eq')
+            elif op == '<':
+                self.op_lst.append('lt')
+            elif op == '>':
+                self.op_lst.append('gt')
+            elif op == '*':
+                self.op_lst.append(('Math.multiply', 2))
+            elif op == '/':
+                self.op_lst.append(('Math.divide', 2))
+            self.tknz.advance()
+            if self.tknz.curr_token != '(':
+                self.cmp_term()
+            else:  # curr token is "("
+                self.tknz.advance()
+                self.cmp_expression()
+                if self.tknz.curr_token == ")" or not self.op_lst:
+                    break
+            while self.op_lst:
+                command = self.op_lst.pop()
+                if type(command) == tuple:
+                    self.VMW.writeCall(command[0], command[1])
+                else:
+                    self.VMW.writeArithmetic(command)
+                if self.peek() != ";":
+                    self.tknz.advance()
+
+    def cmp_term(self):
+        """
+        breaks each expression down into term and compiles them accordingly.
+        """
+        tType = self.tknz.token_type()
+        nextT = self.peek()
+        if tType == "integerConstant":
+            self.VMW.writePush("constant", self.tknz.curr_token)
+            self.tknz.advance()  # advances to ';'
+
+        elif tType == "stringConstant":
+            if not self.tknz.curr_token.endswith("\""):  # checks for str const
+                temp = self.__get_whole_str(self.tknz.curr_token)
+                self.tknz.curr_token = temp  # whole string const with spaces
+            self.file.write(self.tknz.string_val())
+            self.tknz.advance()
+        elif tType == "IDENTIFIER":
+            self.file.write(self.tknz.identifier())
+            if nextT == "[":
+                self.tknz.advance()
+                self.term_helper(self.cmp_expression)
+            self.subRoutineCall(nextT)
+            self.tknz.advance()
+        elif tType == "SYMBOL":
+            self.term_helper(self.cmp_expression)
+            if self.tknz.curr_token in ["-", "~"]:  # unary op ahead
+                self.tknz.advance()
+                self.cmp_term()
+            else:
+                self.tknz.advance()
+        elif tType == "KEYWORD":
+            self.file.write(self.tknz.keyword())
+            self.tknz.advance()
+
+    def subRoutineCall(self, nextT):
+        """
+        compiles a subroutine call
+        :param nextT: the next token, helps determine which case were in.
+        """
+        prefix = self.tknz.curr_token  # class/method names
+        if nextT == "(":
+            self.tknz.advance()
+            self.term_helper(self.cmp_expression_lst)
+
+        elif nextT == ".":
+            self.tknz.advance()  # .
+            self.tknz.advance()  # method name
+            suffix = self.tknz.curr_token  # saves subroutine name
+            fullName = prefix + "." + suffix
+            self.tknz.advance()  # (
+            self.tknz.advance()  # into expression
+            nArgs = self.cmp_expression_lst()  # returns when curr = ")"
+            self.tknz.advance()  # ";"
+            self.VMW.writeCall(fullName, nArgs)
+
+    def term_helper(self, func):
+        """
+        a helper method for term compiling
+        :param func: a function which writes a specific part of code
+        """
+        if self.tknz.curr_token not in ["-", "~"]:  # unary op ahead
+            self.tknz.advance()
+            func()
+
+    def cmp_expression_lst(self):
+        """
+        compiles a list of expressions, separated by commas.
+        :return: amount of variables the function takes.
+        """
+        var_amount = 0
+        if self.tknz.curr_token != ")":
+            while True:
+                self.cmp_expression()  # compiles expression
+                var_amount += 1
+                if self.tknz.curr_token == ")":  # done with exp list
+                    break
+                self.tknz.advance()
+        return var_amount
+
+    def __get_whole_str(self, temp_str):
+        """
+        a helper method for cases which contain string constants with spaces
+        :param temp_str: the current part of the string.
+        :return: the full string const, with spaces.
+        """
+        while not self.tknz.curr_token.endswith("\""):
+            self.tknz.advance()
+            temp_str += " " + self.tknz.curr_token
+        return temp_str
 
 
 class JackCompiler:
