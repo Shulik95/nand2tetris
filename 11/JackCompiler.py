@@ -368,8 +368,8 @@ class CompilationEngine:
         func_type = self.tknz.curr_token  # saves constructor/method/function
         self.tknz.advance()
         self.tknz.advance()  # points to method name.
-        self.methodName = self.tknz.curr_token # saves method name
-        self.symbol.startSubroutine() # reset lower level table.
+        self.methodName = self.tknz.curr_token  # saves method name
+        self.symbol.startSubroutine()  # reset lower level table.
         self.tknz.advance()  # "("
         if func_type == "constructor":
             self.VMW.writeFunction(self.methodName, 0)
@@ -380,32 +380,29 @@ class CompilationEngine:
             self.VMW.writeFunction(self.methodName, self.symbol.varCount("arg"))
             self.symbol.define("this", self.className, "arg")  # adds obj reference
             self.cmp_param_lst()  # adds arguments to table
-            self.VMW.writePush("argument", 0) # pushes the object to stack
+            self.VMW.writePush("argument", 0)  # pushes the object to stack
         self.VMW.writePop("pointer", 0)  # assigns object to "this"
-        self.tknz.advance() # ")"
+        self.tknz.advance()  # ")"
         self.cmp_subroutine_body()
 
+    def cmp_param_lst(self):
+        """
+        compiles the parameter list for a given method, separated by commas.
+        """
+        if self.peek() == ')':  # no arguments are sent into this function
+            return
+        kind = "arg"  # constant for param list
+        while True:
+            self.tknz.advance()  # points to type
+            tempType = self.tknz.curr_token
+            self.tknz.advance()  # points to VarName
+            tempName = self.tknz.curr_token
+            self.symbol.define(tempName, tempType, kind)  # add to table.
+            if self.peek() != ')':
+                self.tknz.advance()  # advances to ","
+            else:
+                break
 
-    # def cmp_param_lst(self):
-    #     """
-    #     compiles the parameter list for a given method, separated by commas.
-    #     """
-    #     self.file.write('<parameterList>\n')
-    #     if self.peek() == ')':
-    #         self.file.write('</parameterList>\n')
-    #         return
-    #     while True:
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.keyword())
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.identifier())
-    #         if self.peek() != ')':
-    #             self.tknz.advance()
-    #             self.file.write(self.tknz.symbol())
-    #         else:
-    #             self.file.write('</parameterList>\n')
-    #             break
-    #
     # def cmp_subroutine_body(self):
     #     """
     #     compiles an entire subroutine body, including method variables and
