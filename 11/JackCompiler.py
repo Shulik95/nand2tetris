@@ -403,53 +403,46 @@ class CompilationEngine:
             else:
                 break
 
-    # def cmp_subroutine_body(self):
-    #     """
-    #     compiles an entire subroutine body, including method variables and
-    #     and inner statements.
-    #     """
-    #     self.file.write("<subroutineBody>\n")
-    #     self.file.write(self.tknz.symbol())  # "{"
-    #     while self.peek() == "var":  # has more method variables
-    #         self.tknz.advance()
-    #         self.cmp_var_dec()
-    #     self.tknz.advance()
-    #     self.cmp_statement()
-    #     self.file.write(self.tknz.symbol())  # "}"
-    #     self.file.write("</subroutineBody>\n")
-    #
-    # def cmp_var_dec(self):
-    #     """
-    #     compiles variable decelerations in methods.
-    #     """
-    #     self.file.write('<varDec>\n')
-    #     self.file.write(self.tknz.keyword())
-    #     self.tknz.advance()
-    #     if self.tknz.token_type() == 'IDENTIFIER':
-    #         self.file.write(self.tknz.identifier())
-    #     else:
-    #         self.file.write(self.tknz.keyword())
-    #     self.tknz.advance()
-    #     self.file.write(self.tknz.identifier())
-    #     self.tknz.advance()
-    #     while self.tknz.curr_token == ',':
-    #         self.file.write(self.tknz.symbol())
-    #         self.tknz.advance()
-    #         self.file.write(self.tknz.identifier())
-    #         self.tknz.advance()
-    #     self.file.write(self.tknz.symbol())
-    #     self.file.write('</varDec>\n')
-    #
-    # def cmp_statement(self):
-    #     """
-    #     compiles a given set of statements, handles all different kinds of
-    #     statements according to the api.
-    #     """
-    #     self.file.write("<statements>\n")
-    #     while self.tknz.curr_token != "}":  # checks if more statements exist.
-    #         self.__cmp_stat_helper()
-    #         self.tknz.advance()
-    #     self.file.write("</statements>\n")
+    def cmp_subroutine_body(self):
+        """
+        compiles an entire subroutine body, including method variables and
+        and inner statements.
+        """
+        while self.peek() == "var":  # if subroutine vars exist, add to table.
+            self.cmp_var_dec()
+        self.tknz.advance()
+        self.cmp_statement()
+        self.file.write(self.tknz.symbol())  # "}"
+        self.file.write("</subroutineBody>\n")
+
+    def cmp_var_dec(self):
+        """
+        compiles variable decelerations in methods.
+        """
+        kind = "local"  # constant for subroutine vars
+        self.tknz.advance()  # var
+        self.tknz.advance()  # type
+        type = self.tknz.curr_token
+        self.tknz.advance()
+        name = self.tknz.curr_token
+        self.symbol.define(name, type, kind)  # adds to table
+        self.tknz.advance()  # either "," or ";"
+        while self.tknz.curr_token == ',':
+            self.tknz.advance()  # get another name
+            name = self.tknz.curr_token
+            self.symbol.define(name, type, kind)
+            self.tknz.advance()  # next "," or ";"
+
+    def cmp_statement(self):
+        """
+        compiles a given set of statements, handles all different kinds of
+        statements according to the api.
+        """
+
+        while self.tknz.curr_token != "}":  # checks if more statements exist.
+            self.__cmp_stat_helper()
+            self.tknz.advance()
+        
     #
     # def __cmp_stat_helper(self):
     #     """
