@@ -369,30 +369,23 @@ class CompilationEngine:
         self.tknz.advance()
         self.tknz.advance()  # points to method name.
         self.methodName = self.tknz.curr_token # saves method name
+        self.symbol.startSubroutine() # reset lower level table.
+        self.tknz.advance()  # "("
         if func_type == "constructor":
             self.VMW.writeFunction(self.methodName, 0)
+            self.cmp_param_lst()  # adds arguments to table
             self.VMW.writePush("constant", self.symbol.varCount("field"))
             self.VMW.writeCall("Memory.alloc", 1)
-            self.VMW.writePop("pointer", 0)
         elif func_type == "method":
-
-
-
-        else:
-            self.file.write(self.tknz.keyword())
-        self.tknz.advance()
-        self.file.write(self.tknz.identifier())
-        self.tknz.advance()
-        self.file.write(self.tknz.symbol())  # (
-        self.cmp_param_lst()
-        self.tknz.advance()
-        self.file.write(self.tknz.symbol())  # )
-        self.tknz.advance()
+            self.VMW.writeFunction(self.methodName, self.symbol.varCount("arg"))
+            self.symbol.define("this", self.className, "arg")  # adds obj reference
+            self.cmp_param_lst()  # adds arguments to table
+            self.VMW.writePush("argument", 0) # pushes the object to stack
+        self.VMW.writePop("pointer", 0)  # assigns object to "this"
+        self.tknz.advance() # ")"
         self.cmp_subroutine_body()
 
-    def cmp_constructor(self):
 
-    #
     # def cmp_param_lst(self):
     #     """
     #     compiles the parameter list for a given method, separated by commas.
