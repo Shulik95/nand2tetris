@@ -146,7 +146,7 @@ class VMWriter:
         """
         Writes a VM call command.
         """
-        self.file.write("call " + name + " " + " " + str(nArgs) + "\n")
+        self.file.write("call " + name + " " + str(nArgs) + "\n")
 
     def writeFunction(self, name, nLocals):
         """
@@ -218,7 +218,8 @@ class Tokenizer:
                     line = line[space_count:]
                     break
             if '/' == line[0] or '\n' == line[0] or '*' == line.split(' ')[0] \
-                    or '/**' in line or "*" == line[0]:  # lines doesnt contain code
+                    or '/**' in line or "*" == line[
+                0]:  # lines doesnt contain code
                 continue
             self.lines.append(line.split('//')[0])
 
@@ -309,7 +310,8 @@ class Tokenizer:
         """
         :return: an in format xml line.
         """
-        return '<stringConstant> ' + self.curr_token[1:-1] + ' </stringConstant>\n'
+        return '<stringConstant> ' + self.curr_token[
+                                     1:-1] + ' </stringConstant>\n'
 
 
 class CompilationEngine:
@@ -326,6 +328,7 @@ class CompilationEngine:
         self.op_lst = []
         self.if_counter = 0
         self.while_counter = 0
+        self.expression_count = 0
 
     def cmp_class(self):
         """
@@ -387,7 +390,8 @@ class CompilationEngine:
             self.VMW.writePop("pointer", 0)  # assigns object to "this"
             self.tknz.advance()
         elif func_type == "method":
-            self.symbol.define("this", self.className, "argument")  # adds obj reference
+            self.symbol.define("this", self.className,
+                               "argument")  # adds obj reference
             self.cmp_param_lst()  # adds arguments to table
             self.tknz.advance()  # {
             if self.peek() == "var":
@@ -395,7 +399,8 @@ class CompilationEngine:
                     self.cmp_var_dec()  # curr is ";"
             else:
                 self.tknz.advance()
-            self.VMW.writeFunction(self.className + "." + self.methodName, self.symbol.varCount("var"))
+            self.VMW.writeFunction(self.className + "." + self.methodName,
+                                   self.symbol.varCount("var"))
             self.VMW.writePush("argument", 0)  # pushes the object to stack
             self.VMW.writePop("pointer", 0)  # assigns object to "this"
         else:
@@ -406,7 +411,8 @@ class CompilationEngine:
                     self.cmp_var_dec()  # curr is ";"
             else:
                 self.tknz.advance()
-            self.VMW.writeFunction(self.className + "." + self.methodName, self.symbol.varCount("var"))  # function
+            self.VMW.writeFunction(self.className + "." + self.methodName,
+                                   self.symbol.varCount("var"))  # function
         self.cmp_subroutine_body()
 
     def cmp_param_lst(self):
@@ -414,6 +420,7 @@ class CompilationEngine:
         compiles the parameter list for a given method, separated by commas.
         """
         if self.peek() == ')':  # no arguments are sent into this function
+            self.tknz.advance()
             return
         kind = "argument"  # constant for param list
         while True:
@@ -497,26 +504,34 @@ class CompilationEngine:
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
-        self.VMW.writePop(kind,index)
+        self.VMW.writePop(kind, index)
 
     def cmp_if(self):
         """
         compiles an 'if' statement.
         """
+        self.if_counter += 1
         self.tknz.advance()  # (
-        self.tknz.advance()  # enters expression
-        self.cmp_expression()  # return when curr = ")"
+        if self.peek() in self.tknz.un_op:
+            self.tknz.advance()
+            self.cmp_expression()
+        else:
+            self.tknz.advance()  # enters expression
+            self.cmp_expression()  # return when curr = ")"
         self.VMW.writeArithmetic("not")
-        self.VMW.writeIf('IF_FALSE' + str(self.if_counter))  # condition is upheld
-        self.VMW.writeGoto("IF_TRUE"+str(self.if_counter))
-        self.VMW.writeLabel('IF_TRUE' + str(self.if_counter))
+        self.VMW.writeIf(
+            'IF_FALSE' + str(self.if_counter))  # condition is upheld
+        tlabel = self.if_counter
         self.__brack_and_statment()
-        self.VMW.writeGoto("IF_END"+str(self.if_counter))
+        self.VMW.writeGoto("IF_TRUE" + str(tlabel))
         if self.peek() == "else":
-            self.VMW.writeLabel('IF_FALSE' + str(self.if_counter))  # creates 2nd label
-            self.tknz.advance()  # points to "else"
+            self.VMW.writeLabel(
+                'IF_FALSE' + str(tlabel))  # creates 2nd label
+            self.tknz.advance()
             self.__brack_and_statment()
-        self.VMW.writeLabel("IF_END"+str(self.if_counter))
+        self.VMW.writeLabel('IF_TRUE' + str(self.if_counter))
+        # self.VMW.writeGoto("IF_END" + str(self.if_counter))
+        # self.VMW.writeLabel("IF_END" + str(self.if_counter))
 
     def __brack_and_statment(self):
         """
@@ -530,18 +545,21 @@ class CompilationEngine:
         """
         compiles a while statement.
         """
+        self.while_counter += 1
+
         self.tknz.advance()  # (
         self.VMW.writeLabel("WHILE-TRUE" + str(self.while_counter))
         self.tknz.advance()  # into expression
         self.cmp_expression()
         self.VMW.writeArithmetic("not")
-        #tLable = "WHILE-TRUE" + str(self.while_counter)
-        #self.while_counter += 1
+        # tLable = "WHILE-TRUE" + str(self.while_counter)
+        # self.while_counter += 1
         self.VMW.writeIf("WHILE-FALSE" + str(self.while_counter))
         self.tknz.advance()  # {
         self.tknz.advance()  # inside statements
         self.cmp_statement()
-        self.VMW.writeGoto("WHILE-TRUE" + str(self.while_counter))  # goes back to loop
+        self.VMW.writeGoto(
+            "WHILE-TRUE" + str(self.while_counter))  # goes back to loop
         # expression isn't upheld, skip statements
         self.VMW.writeLabel("WHILE-FALSE" + str(self.while_counter))
 
@@ -552,7 +570,8 @@ class CompilationEngine:
         self.tknz.advance()
         # print subroutine or class name
         nextT = self.peek()
-        self.subRoutineCall(nextT)  # curr = ";"
+        self.subRoutineCall(nextT)  # curr = ")"
+        self.tknz.advance()
         self.VMW.writePop("temp", 0)
 
     def cmp_return(self):
@@ -645,24 +664,25 @@ class CompilationEngine:
             self.term_helper(self.cmp_expression)
             if self.tknz.curr_token in ["-", "~"]:  # unary op ahead
                 remember = self.tknz.curr_token
+                if self.peek() == "(":
+                    self.tknz.advance()
                 self.tknz.advance()
-                self.cmp_term()
+                self.cmp_expression()
                 if remember == '-':
                     self.VMW.writeArithmetic('neg')
-                else: # ~
+                else:  # ~
                     self.VMW.writeArithmetic('not')
             else:
                 self.tknz.advance()
         elif tType == "KEYWORD":
             if self.tknz.curr_token in self.tknz.key_const:
                 if self.tknz.curr_token == 'this':
-                    self.VMW.writePush('pointer',0)
+                    self.VMW.writePush('pointer', 0)
                 elif self.tknz.curr_token == 'true':
-                    self.VMW.writePush('constant',1)
+                    self.VMW.writePush('constant', 1)
                     self.VMW.writeArithmetic('neg')
-                else: # false or null
+                else:  # false or null
                     self.VMW.writePush('constant', 0)
-
             self.tknz.advance()
 
     def subRoutineCall(self, nextT):
@@ -688,8 +708,8 @@ class CompilationEngine:
             self.tknz.advance()  # (
             self.tknz.advance()  # into expression
             self.cmp_expression_lst()  # returns when curr = ")"
-            self.tknz.advance()  # ";"
-            self.VMW.writeCall(fullName, self.symbol.varCount("arg"))
+            #self.tknz.advance()  # ";"
+            self.VMW.writeCall(fullName, self.expression_count)
 
     def term_helper(self, func):
         """
@@ -705,10 +725,11 @@ class CompilationEngine:
         compiles a list of expressions, separated by commas.
         :return: amount of variables the function takes.
         """
-
+        self.expression_count = 0
         if self.tknz.curr_token != ")":
             while True:
                 self.cmp_expression()  # compiles expression
+                self.expression_count += 1
                 if self.tknz.curr_token == ")":  # done with exp list
                     break
                 self.tknz.advance()
