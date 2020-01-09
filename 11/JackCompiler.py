@@ -497,6 +497,7 @@ class CompilationEngine:
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
+        self.VMW.writePop(kind,index)
 
     def cmp_if(self):
         """
@@ -534,13 +535,13 @@ class CompilationEngine:
         self.tknz.advance()  # into expression
         self.cmp_expression()
         self.VMW.writeArithmetic("not")
-        tLable = "WHILE-TRUE" + str(self.while_counter)
-        self.while_counter += 1
+        #tLable = "WHILE-TRUE" + str(self.while_counter)
+        #self.while_counter += 1
         self.VMW.writeIf("WHILE-FALSE" + str(self.while_counter))
         self.tknz.advance()  # {
         self.tknz.advance()  # inside statements
         self.cmp_statement()
-        self.VMW.writeGoto(tLable)  # goes back to loop
+        self.VMW.writeGoto("WHILE-TRUE" + str(self.while_counter))  # goes back to loop
         # expression isn't upheld, skip statements
         self.VMW.writeLabel("WHILE-FALSE" + str(self.while_counter))
 
@@ -623,7 +624,6 @@ class CompilationEngine:
             if not self.tknz.curr_token.endswith("\""):  # checks for str const
                 temp = self.__get_whole_str(self.tknz.curr_token)
                 self.tknz.curr_token = temp  # whole string const with spaces
-            self.file.write(self.tknz.string_val())
             self.tknz.advance()
         elif tType == "IDENTIFIER":
             if nextT == "[":
@@ -644,12 +644,25 @@ class CompilationEngine:
         elif tType == "SYMBOL":
             self.term_helper(self.cmp_expression)
             if self.tknz.curr_token in ["-", "~"]:  # unary op ahead
+                remember = self.tknz.curr_token
                 self.tknz.advance()
                 self.cmp_term()
+                if remember == '-':
+                    self.VMW.writeArithmetic('neg')
+                else: # ~
+                    self.VMW.writeArithmetic('not')
             else:
                 self.tknz.advance()
         elif tType == "KEYWORD":
-            self.file.write(self.tknz.keyword())
+            if self.tknz.curr_token in self.tknz.key_const:
+                if self.tknz.curr_token == 'this':
+                    self.VMW.writePush('pointer',0)
+                elif self.tknz.curr_token == 'true':
+                    self.VMW.writePush('constant',1)
+                    self.VMW.writeArithmetic('neg')
+                else: # false or null
+                    self.VMW.writePush('constant', 0)
+
             self.tknz.advance()
 
     def subRoutineCall(self, nextT):
