@@ -200,7 +200,7 @@ class Tokenizer:
              }
         self.get_all_tokens()
         self.un_op = {"-", "~"}
-        self.bin_op = {"+", "*", "/", "&", "|", "<", ">", "="}
+        self.bin_op = {"-","+", "*", "/", "&", "|", "<", ">", "="}
         self.key_const = {"true", "false", "null", "this"}
 
     def clean_lines(self):
@@ -410,7 +410,8 @@ class CompilationEngine:
                 while self.peek() == "var":
                     self.cmp_var_dec()  # curr is ";"
             else:
-                self.tknz.advance()
+                if self.tknz.curr_token != '{':
+                    self.tknz.advance()
             self.VMW.writeFunction(self.className + "." + self.methodName,
                                    self.symbol.varCount("var"))  # function
         self.cmp_subroutine_body()
@@ -529,9 +530,8 @@ class CompilationEngine:
                 'IF_FALSE' + str(tlabel))  # creates 2nd label
             self.tknz.advance()
             self.__brack_and_statment()
-        self.VMW.writeLabel('IF_TRUE' + str(self.if_counter))
-        # self.VMW.writeGoto("IF_END" + str(self.if_counter))
-        # self.VMW.writeLabel("IF_END" + str(self.if_counter))
+        self.VMW.writeLabel('IF_TRUE' + str(tlabel))
+
 
     def __brack_and_statment(self):
         """
