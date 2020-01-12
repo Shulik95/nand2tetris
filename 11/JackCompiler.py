@@ -200,7 +200,7 @@ class Tokenizer:
              }
         self.get_all_tokens()
         self.un_op = {"-", "~"}
-        self.bin_op = {"-","+", "*", "/", "&", "|", "<", ">", "="}
+        self.bin_op = {"-", "+", "*", "/", "&", "|", "<", ">", "="}
         self.key_const = {"true", "false", "null", "this"}
 
     def clean_lines(self):
@@ -329,6 +329,7 @@ class CompilationEngine:
         self.if_counter = 0
         self.while_counter = 0
         self.expression_count = 0
+        self.if_constructor = False
 
     def cmp_class(self):
         """
@@ -383,6 +384,7 @@ class CompilationEngine:
         self.symbol.startSubroutine()  # reset lower level table.
         self.tknz.advance()  # "("
         if func_type == "constructor":
+            self.if_constructor = True
             self.VMW.writeFunction(self.className + "." + self.methodName, 0)
             self.cmp_param_lst()  # adds arguments to table
             self.VMW.writePush("constant", self.symbol.varCount("field"))
@@ -505,6 +507,8 @@ class CompilationEngine:
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
+        if self.if_constructor:
+            kind = 'this'
         self.VMW.writePop(kind, index)
 
     def cmp_if(self):
@@ -531,7 +535,6 @@ class CompilationEngine:
             self.tknz.advance()
             self.__brack_and_statment()
         self.VMW.writeLabel('IF_TRUE' + str(tlabel))
-
 
     def __brack_and_statment(self):
         """
@@ -586,6 +589,8 @@ class CompilationEngine:
             self.VMW.writePush("constant", 0)
             self.tknz.advance()
         self.VMW.writeReturn()
+        if self.if_constructor:
+            self.if_constructor = not self.if_constructor
 
     def cmp_expression(self):
         """
@@ -690,6 +695,7 @@ class CompilationEngine:
         compiles a subroutine call
         :param nextT: the next token, helps determine which case were in.
         """
+        self.expression_count = 0
         prefix = self.tknz.curr_token  # class/method names
         if nextT == "(":
             self.tknz.advance()
@@ -701,6 +707,16 @@ class CompilationEngine:
             self.VMW.writeCall(self.className + "." + prefix, nArgs)
 
         elif nextT == ".":
+            # when calling a method using an object. for ex:
+            # game.run(), when game is in the symbol table
+            if self.tknz.curr_token in self.symbol.class_level \
+                    or self.tknz.curr_token in self.symbol.subroutine_level:
+                kind = self.symbol.kindOf(self.tknz.curr_token)
+                index = self.symbol.indexOf(self.tknz.curr_token)
+                prefix = self.symbol.typeOf(self.tknz.curr_token)
+                self.VMW.writePush(kind, index)
+                self.expression_count += 1
+
             self.tknz.advance()  # .
             self.tknz.advance()  # method name
             suffix = self.tknz.curr_token  # saves subroutine name
@@ -708,7 +724,7 @@ class CompilationEngine:
             self.tknz.advance()  # (
             self.tknz.advance()  # into expression
             self.cmp_expression_lst()  # returns when curr = ")"
-            #self.tknz.advance()  # ";"
+            # self.tknz.advance()  # ";"
             self.VMW.writeCall(fullName, self.expression_count)
 
     def term_helper(self, func):
@@ -725,7 +741,6 @@ class CompilationEngine:
         compiles a list of expressions, separated by commas.
         :return: amount of variables the function takes.
         """
-        self.expression_count = 0
         if self.tknz.curr_token != ")":
             while True:
                 self.cmp_expression()  # compiles expression
