@@ -39,7 +39,7 @@ class SymbolTable:
             self.class_level[name] = [type, kind, self.static_counter]
             self.static_counter += 1
         elif kind == 'field':
-            self.class_level[name] = [type, kind, self.field_counter]
+            self.class_level[name] = [type, "this", self.field_counter]
             self.field_counter += 1
         elif kind == 'argument':
             self.subroutine_level[name] = [type, kind, self.arg_counter]
@@ -399,8 +399,6 @@ class CompilationEngine:
             if self.peek() == "var":
                 while self.peek() == "var":
                     self.cmp_var_dec()  # curr is ";"
-            else:
-                self.tknz.advance()
             self.VMW.writeFunction(self.className + "." + self.methodName,
                                    self.symbol.varCount("var"))
             self.VMW.writePush("argument", 0)  # pushes the object to stack
@@ -507,7 +505,7 @@ class CompilationEngine:
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
-        if self.if_constructor:
+        if self.if_constructor or kind == "field":
             kind = 'this'
         self.VMW.writePop(kind, index)
 
@@ -529,9 +527,9 @@ class CompilationEngine:
         tlabel = self.if_counter
         self.__brack_and_statment()
         self.VMW.writeGoto("IF_TRUE" + str(tlabel))
+        self.VMW.writeLabel(
+            'IF_FALSE' + str(tlabel))  # creates 2nd label
         if self.peek() == "else":
-            self.VMW.writeLabel(
-                'IF_FALSE' + str(tlabel))  # creates 2nd label
             self.tknz.advance()
             self.__brack_and_statment()
         self.VMW.writeLabel('IF_TRUE' + str(tlabel))
@@ -555,16 +553,15 @@ class CompilationEngine:
         self.tknz.advance()  # into expression
         self.cmp_expression()
         self.VMW.writeArithmetic("not")
-        # tLable = "WHILE-TRUE" + str(self.while_counter)
-        # self.while_counter += 1
-        self.VMW.writeIf("WHILE-FALSE" + str(self.while_counter))
+        tLable = str(self.while_counter)
+        self.VMW.writeIf("WHILE-FALSE" + str(tLable))
         self.tknz.advance()  # {
         self.tknz.advance()  # inside statements
         self.cmp_statement()
         self.VMW.writeGoto(
-            "WHILE-TRUE" + str(self.while_counter))  # goes back to loop
+            "WHILE-TRUE" + str(tLable))  # goes back to loop
         # expression isn't upheld, skip statements
-        self.VMW.writeLabel("WHILE-FALSE" + str(self.while_counter))
+        self.VMW.writeLabel("WHILE-FALSE" + str(tLable))
 
     def cmp_do(self):
         """
@@ -700,10 +697,10 @@ class CompilationEngine:
         if nextT == "(":
             self.tknz.advance()
             self.VMW.writePush("pointer", 0)
-            self.VMW.writePop("arg", 0)  # first arg of method is "self"
-            self.symbol.arg_counter += 1
+            #  self.VMW.writePop("argument", 0)  # first arg of method is "self"
+            self.expression_count += 1
             self.term_helper(self.cmp_expression_lst)
-            nArgs = self.symbol.varCount("arg")
+            nArgs = self.expression_count
             self.VMW.writeCall(self.className + "." + prefix, nArgs)
 
         elif nextT == ".":
