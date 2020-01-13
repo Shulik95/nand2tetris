@@ -497,7 +497,7 @@ class CompilationEngine:
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
-        self.VMW.writePop(kind,index)
+        self.VMW.writePop(kind, index)
 
     def cmp_if(self):
         """
@@ -508,15 +508,15 @@ class CompilationEngine:
         self.cmp_expression()  # return when curr = ")"
         self.VMW.writeArithmetic("not")
         self.VMW.writeIf('IF_FALSE' + str(self.if_counter))  # condition is upheld
-        self.VMW.writeGoto("IF_TRUE"+str(self.if_counter))
+        self.VMW.writeGoto("IF_TRUE" + str(self.if_counter))
         self.VMW.writeLabel('IF_TRUE' + str(self.if_counter))
         self.__brack_and_statment()
-        self.VMW.writeGoto("IF_END"+str(self.if_counter))
+        self.VMW.writeGoto("IF_END" + str(self.if_counter))
         if self.peek() == "else":
             self.VMW.writeLabel('IF_FALSE' + str(self.if_counter))  # creates 2nd label
             self.tknz.advance()  # points to "else"
             self.__brack_and_statment()
-        self.VMW.writeLabel("IF_END"+str(self.if_counter))
+        self.VMW.writeLabel("IF_END" + str(self.if_counter))
 
     def __brack_and_statment(self):
         """
@@ -535,8 +535,8 @@ class CompilationEngine:
         self.tknz.advance()  # into expression
         self.cmp_expression()
         self.VMW.writeArithmetic("not")
-        #tLable = "WHILE-TRUE" + str(self.while_counter)
-        #self.while_counter += 1
+        # tLable = "WHILE-TRUE" + str(self.while_counter)
+        # self.while_counter += 1
         self.VMW.writeIf("WHILE-FALSE" + str(self.while_counter))
         self.tknz.advance()  # {
         self.tknz.advance()  # inside statements
@@ -649,20 +649,19 @@ class CompilationEngine:
                 self.cmp_term()
                 if remember == '-':
                     self.VMW.writeArithmetic('neg')
-                else: # ~
+                else:  # ~
                     self.VMW.writeArithmetic('not')
             else:
                 self.tknz.advance()
         elif tType == "KEYWORD":
             if self.tknz.curr_token in self.tknz.key_const:
                 if self.tknz.curr_token == 'this':
-                    self.VMW.writePush('pointer',0)
+                    self.VMW.writePush('pointer', 0)
                 elif self.tknz.curr_token == 'true':
-                    self.VMW.writePush('constant',1)
+                    self.VMW.writePush('constant', 1)
                     self.VMW.writeArithmetic('neg')
-                else: # false or null
+                else:  # false or null
                     self.VMW.writePush('constant', 0)
-
             self.tknz.advance()
 
     def subRoutineCall(self, nextT):
