@@ -329,7 +329,7 @@ class CompilationEngine:
         self.while_counter = 0
         self.expression_count = 0
         self.is_constructor = False
-        self.is_array = True
+        self.is_array = False
 
     def cmp_class(self):
         """
@@ -497,9 +497,12 @@ class CompilationEngine:
         kind = self.symbol.kindOf(self.tknz.curr_token)
         index = self.symbol.indexOf(self.tknz.curr_token)
         if self.peek() == '[':
+            self.is_array = True
+            self.VMW.writePush(kind, index)
             self.tknz.advance()  # [
             self.tknz.advance()  # steps into expression
             self.cmp_expression()  # returns when curr = "]"
+            self.VMW.writeArithmetic("add")
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
@@ -657,11 +660,13 @@ class CompilationEngine:
             segment = self.symbol.kindOf(self.tknz.curr_token)
             index = self.symbol.indexOf(self.tknz.curr_token)
             if nextT == "[":  # compiles array
-                self.is_array = True
+                # self.is_array = True
                 self.VMW.writePush(segment, index)
                 self.tknz.advance()
                 self.term_helper(self.cmp_expression)
                 self.VMW.writeArithmetic("add")
+                self.VMW.writePop("pointer", 1)  # points to address now
+                self.VMW.writePush("that", 0)
             if self.tknz.curr_token in self.symbol.class_level:
                 if segment == "this":
                     self.VMW.writePush("this", index)
@@ -721,7 +726,6 @@ class CompilationEngine:
             self.term_helper(self.cmp_expression_lst)
             nArgs = self.expression_count
             self.VMW.writeCall(self.className + "." + prefix, nArgs)
-
         elif nextT == ".":
             # when calling a method using an object. for ex:
             # game.run(), when game is in the symbol table
