@@ -596,41 +596,52 @@ class CompilationEngine:
         self.cmp_term()
         while self.tknz.curr_token in self.tknz.bin_op:
             op = self.tknz.curr_token
+            temp = ''
+            temp_index = ''
             if op == '+':
                 self.op_lst.append('add')
+                temp = "add"
             elif op == '-':
                 self.op_lst.append('sub')
+                temp = "sub"
             elif op == '|':
                 self.op_lst.append('or')
+                temp = "or"
             elif op == '&':
                 self.op_lst.append('and')
+                temp = "and"
             elif op == '=':
                 self.op_lst.append('eq')
+                temp = "eq"
             elif op == '<':
                 self.op_lst.append('lt')
+                temp = "lt"
             elif op == '>':
                 self.op_lst.append('gt')
+                temp = "gt"
             elif op == '*':
                 self.op_lst.append(('Math.multiply', 2))
+                temp = "Math.multiply"
+                temp_index = 2
             elif op == '/':
                 self.op_lst.append(('Math.divide', 2))
+                temp = "Math.divide"
+                temp_index = 2
             self.tknz.advance()
             if self.tknz.curr_token != '(':
                 self.cmp_term()
             else:  # curr token is "("
                 self.tknz.advance()
                 self.cmp_expression()
-                if self.tknz.curr_token == ")" or not self.op_lst:
+                if self.tknz.curr_token == ")" and not temp:
                     break
-            while self.op_lst:
-                command = self.op_lst.pop()
-                if type(command) == tuple:
-                    self.VMW.writeCall(command[0], command[1])
-                else:
-                    self.VMW.writeArithmetic(command)
-                nextT = self.peek()
-                if nextT != ";" and nextT == ")":  # deals with recursive cases
-                    self.tknz.advance()
+            if "." in temp:
+                self.VMW.writeCall(temp, temp_index)
+            else:
+                self.VMW.writeArithmetic(temp)
+            nextT = self.peek()
+            if nextT != ";" and nextT == ")":  # deals with recursive cases
+                self.tknz.advance()
 
     def cmp_term(self):
         """
@@ -653,7 +664,7 @@ class CompilationEngine:
             segment = self.symbol.kindOf(self.tknz.curr_token)
             index = self.symbol.indexOf(self.tknz.curr_token)
             if self.tknz.curr_token in self.symbol.class_level:
-                if segment == "field":
+                if segment == "this":
                     self.VMW.writePush("this", index)
                 else:  # static
                     self.VMW.writePush(segment, index)
