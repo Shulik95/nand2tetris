@@ -325,11 +325,11 @@ class CompilationEngine:
         self.symbol = SymbolTable()
         self.className = ""
         self.methodName = ""
-        self.op_lst = []
         self.if_counter = 0
         self.while_counter = 0
         self.expression_count = 0
-        self.if_constructor = False
+        self.is_constructor = False
+        self.is_array = True
 
     def cmp_class(self):
         """
@@ -384,7 +384,7 @@ class CompilationEngine:
         self.symbol.startSubroutine()  # reset lower level table.
         self.tknz.advance()  # "("
         if func_type == "constructor":
-            self.if_constructor = True
+            self.is_constructor = True
             self.VMW.writeFunction(self.className + "." + self.methodName, 0)
             self.cmp_param_lst()  # adds arguments to table
             self.VMW.writePush("constant", self.symbol.varCount("field"))
@@ -497,17 +497,22 @@ class CompilationEngine:
         kind = self.symbol.kindOf(self.tknz.curr_token)
         index = self.symbol.indexOf(self.tknz.curr_token)
         if self.peek() == '[':
-            self.tknz.advance()
-            self.file.write(self.tknz.symbol())  # [
-            self.tknz.advance()
-            self.cmp_expression()
-            self.file.write(self.tknz.symbol())  # ]
+            self.tknz.advance()  # [
+            self.tknz.advance()  # steps into expression
+            self.cmp_expression()  # returns when curr = "]"
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
-        if self.if_constructor or kind == "field":
-            kind = 'this'
-        self.VMW.writePop(kind, index)
+        if self.is_array:
+            self.VMW.writePop("temp", 0)  # saves 2nd value
+            self.VMW.writePop("pointer", 1)  # points to first
+            self.VMW.writePush("temp", 0)  # adds 2nd val to stack
+            self.VMW.writePop("that", 0)  # adds first val 2 stack.
+            self.is_array = False
+        elif not self.is_array:
+            if self.is_constructor or kind == "field":
+                kind = 'this'
+            self.VMW.writePop(kind, index)
 
     def cmp_if(self):
         """
@@ -547,7 +552,6 @@ class CompilationEngine:
         compiles a while statement.
         """
         self.while_counter += 1
-
         self.tknz.advance()  # (
         self.VMW.writeLabel("WHILE-TRUE" + str(self.while_counter))
         self.tknz.advance()  # into expression
@@ -586,8 +590,8 @@ class CompilationEngine:
             self.VMW.writePush("constant", 0)
             self.tknz.advance()
         self.VMW.writeReturn()
-        if self.if_constructor:
-            self.if_constructor = not self.if_constructor
+        if self.is_constructor:
+            self.is_constructor = not self.is_constructor
 
     def cmp_expression(self):
         """
@@ -599,32 +603,23 @@ class CompilationEngine:
             temp = ''
             temp_index = ''
             if op == '+':
-                self.op_lst.append('add')
                 temp = "add"
             elif op == '-':
-                self.op_lst.append('sub')
                 temp = "sub"
             elif op == '|':
-                self.op_lst.append('or')
                 temp = "or"
             elif op == '&':
-                self.op_lst.append('and')
                 temp = "and"
             elif op == '=':
-                self.op_lst.append('eq')
                 temp = "eq"
             elif op == '<':
-                self.op_lst.append('lt')
                 temp = "lt"
             elif op == '>':
-                self.op_lst.append('gt')
                 temp = "gt"
             elif op == '*':
-                self.op_lst.append(('Math.multiply', 2))
                 temp = "Math.multiply"
                 temp_index = 2
             elif op == '/':
-                self.op_lst.append(('Math.divide', 2))
                 temp = "Math.divide"
                 temp_index = 2
             self.tknz.advance()
@@ -656,13 +651,17 @@ class CompilationEngine:
             if not self.tknz.curr_token.endswith("\""):  # checks for str const
                 temp = self.__get_whole_str(self.tknz.curr_token)
                 self.tknz.curr_token = temp  # whole string const with spaces
+            self.str_append()  # handles string.
             self.tknz.advance()
         elif tType == "IDENTIFIER":
-            if nextT == "[":
-                self.tknz.advance()
-                self.term_helper(self.cmp_expression)
             segment = self.symbol.kindOf(self.tknz.curr_token)
             index = self.symbol.indexOf(self.tknz.curr_token)
+            if nextT == "[":  # compiles array
+                self.is_array = True
+                self.VMW.writePush(segment, index)
+                self.tknz.advance()
+                self.term_helper(self.cmp_expression)
+                self.VMW.writeArithmetic("add")
             if self.tknz.curr_token in self.symbol.class_level:
                 if segment == "this":
                     self.VMW.writePush("this", index)
@@ -698,6 +697,16 @@ class CompilationEngine:
                     self.VMW.writePush('constant', 0)
             self.tknz.advance()
 
+    def str_append(self):
+        """
+        appends string by translating to ascii and using OS methods.
+        """
+        self.VMW.writePush("constant", len(self.tknz.curr_token))  # size of str
+        self.VMW.writeCall("String.new", 1)  # creates str object
+        for char in self.tknz.curr_token:
+            self.VMW.writePush("constant", ord(char))
+            self.VMW.writeCall("String.appendChar", 2)  # appends char to str
+
     def subRoutineCall(self, nextT):
         """
         compiles a subroutine call
@@ -708,7 +717,6 @@ class CompilationEngine:
         if nextT == "(":
             self.tknz.advance()
             self.VMW.writePush("pointer", 0)
-            #  self.VMW.writePop("argument", 0)  # first arg of method is "self"
             self.expression_count += 1
             self.term_helper(self.cmp_expression_lst)
             nArgs = self.expression_count
@@ -724,7 +732,6 @@ class CompilationEngine:
                 prefix = self.symbol.typeOf(self.tknz.curr_token)
                 self.VMW.writePush(kind, index)
                 self.expression_count += 1
-
             self.tknz.advance()  # .
             self.tknz.advance()  # method name
             suffix = self.tknz.curr_token  # saves subroutine name
@@ -732,7 +739,6 @@ class CompilationEngine:
             self.tknz.advance()  # (
             self.tknz.advance()  # into expression
             self.cmp_expression_lst()  # returns when curr = ")"
-            # self.tknz.advance()  # ";"
             self.VMW.writeCall(fullName, self.expression_count)
 
     def term_helper(self, func):
