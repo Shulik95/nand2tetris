@@ -218,9 +218,15 @@ class Tokenizer:
                     line = line[space_count:]
                     break
             if '/' == line[0] or '\n' == line[0] or '*' == line.split(' ')[0] \
-                    or '/**' in line or "*" == line[
-                0]:  # lines doesnt contain code
+                    or '/**' in line or "*" == line[0]:  # lines doesnt contain code
                 continue
+            if '/*' in line:
+                idx = line.find('/*')
+                line = line[:idx]
+            if '//' in line:
+                idx = line.find('//')
+                line = line[:idx]
+
             self.lines.append(line.split('//')[0])
 
     def get_all_tokens(self):
@@ -807,6 +813,7 @@ class JackCompiler:
                 self.engine.cmp_class()
         else:
             self.tknz = Tokenizer(self.file_path)
+            print(self.tknz.all_tokens)
             self.engine = CompilationEngine(self.file_path, self.tknz)
             self.engine.cmp_class()
 
