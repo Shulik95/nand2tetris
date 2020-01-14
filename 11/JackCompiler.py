@@ -654,7 +654,8 @@ class CompilationEngine:
             self.tknz.advance()  # advances to ')'
         elif tType == "stringConstant":
             if not self.tknz.curr_token.endswith("\""):  # checks for str const
-                temp = self.__get_whole_str(self.tknz.curr_token)[1:-1]
+                # removes double quotes
+                temp = self.__get_whole_str(self.tknz.curr_token)
                 self.tknz.curr_token = temp  # whole string const with spaces
             self.str_append()  # handles string.
             self.tknz.advance()
@@ -662,7 +663,6 @@ class CompilationEngine:
             segment = self.symbol.kindOf(self.tknz.curr_token)
             index = self.symbol.indexOf(self.tknz.curr_token)
             if nextT == "[":  # compiles array
-                # self.is_array = True
                 self.VMW.writePush(segment, index)
                 self.tknz.advance()
                 self.term_helper(self.cmp_expression)
@@ -711,6 +711,8 @@ class CompilationEngine:
         self.VMW.writePush("constant", len(self.tknz.curr_token)-2)  # size of str
         self.VMW.writeCall("String.new", 1)  # creates str object
         for char in self.tknz.curr_token:
+            if char == "\"":
+                continue
             self.VMW.writePush("constant", ord(char))
             self.VMW.writeCall("String.appendChar", 2)  # appends char to str
 
