@@ -506,6 +506,8 @@ class CompilationEngine:
         self.tknz.advance()  # =
         self.tknz.advance()  # enters expression
         self.cmp_expression()  # returns when curr = ";"
+        if self.peek() == ";":
+            self.tknz.advance()
         if self.is_array:
             self.VMW.writePop("temp", 0)  # saves 2nd value
             self.VMW.writePop("pointer", 1)  # points to first
@@ -638,7 +640,7 @@ class CompilationEngine:
             else:
                 self.VMW.writeArithmetic(temp)
             nextT = self.peek()
-            if nextT != ";" and nextT == ")":  # deals with recursive cases
+            if nextT == ")":  # deals with recursive cases
                 self.tknz.advance()
 
     def cmp_term(self):
@@ -674,7 +676,7 @@ class CompilationEngine:
                     self.VMW.writePush(segment, index)
             elif self.tknz.curr_token in self.symbol.subroutine_level:
                 self.VMW.writePush(segment, index)  # local or arg
-            elif nextT in ["(", "."]:
+            if nextT in ["(", "."]:
                 self.subRoutineCall(nextT)
             self.tknz.advance()
         elif tType == "SYMBOL":
