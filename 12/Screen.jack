@@ -6,38 +6,159 @@
 /**
  * A library of functions for displaying graphics on the screen.
  * The Hack physical screen consists of 512 rows (indexed 0..511, top to bottom)
- * of 256 pixels each (indexed 0..255, left to right). The top left pixel on 
+ * of 256 pixels each (indexed 0..255, left to right). The top left pixel on
  * the screen is indexed (0,0).
  */
 class Screen {
+    static boolean black, white, color;
+    field int rows, cols;
+    static Array screen;
 
     /** Initializes the Screen. */
     function void init() {
+      let black = true;
+      let white = false;
+      let color = white;
+      let screen = 16384;
+      let rows = 512;
+      let cols = 256;
     }
 
     /** Erases the entire screen. */
     function void clearScreen() {
+      var int r,c;
+      let r = 0;
+      let c = 0;
+      while (r < rows){
+        while (c < cols){
+          drawPixel(r,c);
+          let c = c + 1;
+        }
+        let r = r+1;
+        let c = 0;
+      }
+      return;
     }
 
     /** Sets the current color, to be used for all subsequent drawXXX commands.
      *  Black is represented by true, white by false. */
     function void setColor(boolean b) {
+      if (b){
+        let color = black;
+      }
+      else{
+        let color = white;
+      }
+      return;
     }
 
     /** Draws the (x,y) pixel, using the current color. */
     function void drawPixel(int x, int y) {
+      var int address, offset;
+      let address = multBy32(y) + Math.divide(x, 16);
+      let offset = Math.getPowerOf(x & 15); // x % 2^i == x &( 2^i - 1)
+      if(color){ //need to change pixel to black
+        let screen[address] = screen[address]|offset; //colors the given pixel
+      }
+      else{
+        let screen[address] = screen[address] & ~offset; //doesnt color given pixel
+      }
+      return;
+
     }
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
+      var int dx, dy, rightMoves, upMoves, diff;
+      let dx = Math.abs(x2-x1);
+      let dy = Math.abs(y2 -y1);
+      let rightMoves = 0;
+      let upMoves = 0;
+      let diff = rightMoves * dy - upMoves * dx //starts of as 0
+      if (x1 = x2){
+        do drawDiagonal(x1, y1, x2, y2);
+      }
+      if(y1 = y2){
+        do drawHorizontal(x1, y1, x2, y2);
+      }
+      else{
+        while (~(rightMoves > dx) & ~(upMoves > dy)){
+          drawPixel(x1+rightMoves, y1 + upMoves);
+        }
+        if (diff < 0){
+          let rightMoves = rightMoves + 1;
+          let diff  = diff + dy;
+        }
+        else{
+          let upMoves = upMoves + 1;
+          let diff = diff - dx;
+        }
+      }
+      return;
+    }
+    /**draws a diagonal line*/
+    function void drawDiagonal(int x, int y, int dy){
+      var int length;
+      let length = 0;
+      while(~(length > dy)){
+        do Screen.drawPixel(x, y + length);
+        let length = length + 1;
+      }
+      return;
+    }
+
+    function void drawHorizontal(int x, int y, int dx){
+      var int length;
+      let length = 0;
+      while(~(length > dx)){
+        do Screen.drawPixel(x + length, y);
+        let length = length + 1;
+      }
+      return;
     }
 
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      * and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+      var int start;
+      let start = x1;
+      if(x2 > x1){
+        while(~(start>x2)){
+          do Screen.drawLine(start, y1, start, y2);
+          let start = start + 1;
+        }
+      }
+      else{
+        while(~(start < x2)){
+          do Screen.drawLine(start, y1, start, y2);
+          let start = start - 1;
+        }
+      }
+      return;
     }
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
+      var int dy;
+      let dy=-r;
+      if(r>181){
+        return;
+      }
+      while (~(dy>r)){
+        let length = Math.sqrt(r*r-dy*dy);
+        do Screen.drawLine(x-length,y+dy,x+length,y+dy);
+        let dy = dy+1;
+      }
+      return;
+    }
+    /**helper method which only multiplies 6 times - the amount of bits that represent 32*/
+    function int multBy32(int x){
+      var int j;
+      let j = 0;
+      while ~(j=5){
+        x = x+x;
+        let j = j+1;
+      }
+      return x;
     }
 }

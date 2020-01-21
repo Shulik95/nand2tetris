@@ -144,6 +144,9 @@ class Math {
         return b;
       }
       return a;
-
+    }
+    /** helper method for other classes*/
+    function int getPowerOf(int x){
+      return twoToThe[x];
     }
 }
