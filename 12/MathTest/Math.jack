@@ -82,8 +82,8 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
-      var boolean recursive_qy,is_neg;
-      var int q, posX, posY, finalVal;
+      var boolean is_neg;
+      var int q, posX, posY, finalVal,recursive_qy;
       if (((x < 0) & (y > 0)) | ((x>0) & (y<0))){
         let is_neg = true; //handles neg numbers
       }
@@ -94,11 +94,11 @@ class Math {
         return 0;
       }
       let q = Math.divide(posX, (posY+posY));
-      if ((posX-(q + q)*posY)<posY){
+      if ((posX-recursive_qy)<posY){
         let finalVal = q + q;
       }
       else{
-        let recursive_qy = recursive_qy;
+        let recursive_qy = recursive_qy + posY;
         let finalVal = (q + q) + 1;
       }
       if (is_neg){
