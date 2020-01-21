@@ -10,6 +10,7 @@
 class Math {
     static Array twoToThe;
     static recursive_q_y;
+
     /** Initializes the library. */
     function void init() {
       let twoToThe = Array.new(16)
@@ -48,9 +49,7 @@ class Math {
      *  the Jack expressions x*y and multiply(x,y) return the same value.
      */
     function int multiply(int x, int y) {
-      var int sum;
-      var int shiftedX;
-      var int i;
+      var int sum, shiftedX, i;
         let sum = 0;
         let i = 0;
         let shiftedX = x;
@@ -95,7 +94,7 @@ class Math {
         return 0;
       }
       let q = divide(posX, posY+posY);
-      if (posX-Math.mult(q + q)*posY){
+      if ((posX-Math.mult(q + q)*posY)<posY){
         return q + q;
       }
       else{
@@ -112,6 +111,19 @@ class Math {
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
+      var int i,temp,ans,squared;
+      let ans=0;
+      let i=7; // initial power (n/2)-1=(16/2)-1=7
+      while (~(i<0)){ //while i>=0
+        let temp = ans + twoToThe[i]; // insted of calculating 2^j, we use the
+                                      // designated array twoToThe[i]
+        let squared = temp * temp;
+        if (~(squared>x) & (squared>0)){
+          let ans = ans + temp;
+        }
+        let i = i-1;
+      }
+      return ans
     }
 
     /** Returns the greater number. */
