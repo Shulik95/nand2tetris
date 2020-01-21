@@ -9,7 +9,7 @@
  */
 class Math {
     static Array twoToThe;
-
+    static recursive_q_y;
     /** Initializes the library. */
     function void init() {
       let twoToThe = Array.new(16)
@@ -63,12 +63,13 @@ class Math {
         }
         return sum;
     }
+
     /**
     if the i'th element of x is 1 - return true
     else - return False
     */
     function boolean bit_is_one (int x, int i){
-      if((x&twoToThe[j])=0){
+      if((x & twoToThe[j])=0){
         return true
       }
       else{
@@ -82,6 +83,31 @@ class Math {
      *  the Jack expressions x/y and divide(x,y) return the same value.
      */
     function int divide(int x, int y) {
+      var boolean sign;
+      var int q, posX, posY, finalVal;
+      if (((x < 0) & (y > 0)) | ((x>0) & (y<0))){
+        let sign = true //handles neg numbers
+      }
+      let posX = Math.abs(x);
+      let posy = Math.abs(y);
+      if ((y > x) | (y < 0) ){ //handles overflow
+        let recursive_q_y = 0;
+        return 0;
+      }
+      let q = divide(posX, posY+posY);
+      if (posX-Math.mult(q + q)*posY){
+        return q + q;
+      }
+      else{
+        let recursive_q_y = recursive_q_y;
+        return (q + q) + 1;
+      }
+      if(sign){ // output shoud be negative
+        return -finalVal
+      }
+      else{ //output is positive
+        return finalVal
+      }
     }
 
     /** Returns the integer part of the square root of x. */
