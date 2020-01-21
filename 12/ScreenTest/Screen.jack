@@ -61,15 +61,15 @@ class Screen {
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
-      var int dx, dy;
+      var int dx, dy, rightMoves, upMoves, diff;
       let dx = Math.abs(x2-x1);
       let dy = Math.abs(y2 -y1);
 
       if (x1 = x2){
-        do Screen.drawVertical(x1, y1, x2, y2);
+        do drawVertical(x1, y1, x2, y2);
       }
       if(y1 = y2){
-        do Screen.drawHorizontal(x1, y1, x2, y2);
+        do drawHorizontal(x1, y1, x2, y2);
       }
       if((x1 < x2)&( y1 < y2)){
         do Screen.line_helper1(x1, y1, dx, dy);
@@ -87,7 +87,6 @@ class Screen {
     }
     /**deals with ascending lines according to the given axis*/
     function void line_helper1(int x, int y, int dx, int dy){
-      var int rightMoves, upMoves, diff;
       let rightMoves = 0;
       let upMoves = 0;
       let diff = rightMoves * dy - upMoves * dx //starts of as 0
@@ -106,7 +105,6 @@ class Screen {
     }
     /**deals with descending lines in the given axis*/
     function void line_helper2(int x, int y, int dx, int dy){
-      var int rightMoves, upMoves, diff;
       let rightMoves = 0;
       let upMoves = 0;
       let diff = rightMoves * dy - upMoves * dx //starts of as 0
