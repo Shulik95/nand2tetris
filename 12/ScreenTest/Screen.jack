@@ -60,67 +60,195 @@ class Screen {
     }
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
+    // function void drawLine(int x1, int y1, int x2, int y2) {
+    //   var int dx, dy;
+    //   let dx = Math.abs(x2-x1);
+    //   let dy = Math.abs(y2 -y1);
+    //
+    //   if (x1 = x2){
+    //     do Screen.drawVertical(x1, y1, x2, y2);
+    //   }
+    //   if(y1 = y2){
+    //     do Screen.drawHorizontal(x1, y1, x2, y2);
+    //   }
+    //   if((x1 < x2)&( y1 < y2)){
+    //     do Screen.line_helper1(x1, y1, dx, dy);
+    //   }
+    //   if((x1 > x2) & (y1 < y2)){
+    //     do Screen.line_helper2(x2,y2,-dx, -dy);
+    //   }
+    //   if((x1<x2) & (y1 > y2)){
+    //     do Screen.line_helper2(x1,y1,dx,dy);
+    //   }
+    //   if((x1>x2) & (y1>y2)){
+    //     do Screen.line_helper1(x2,y2, -dx, -dy);
+    //   }
+    //   return;
+    // }
+    // /**deals with ascending lines according to the given axis*/
+    // function void line_helper1(int x, int y, int dx, int dy){
+    //   var int rightMoves, upMoves, diff;
+    //   let rightMoves = 0;
+    //   let upMoves = 0;
+    //   let diff = rightMoves * dy - upMoves * dx //starts of as 0
+    //   while(~(rightMoves > dx) & ~(upMoves > dy)){
+    //     do Screen.drawPixel(x+rightMoves, y+upMoves);
+    //     if(diff > 0){
+    //       let rightMoves = rightMoves + 1;
+    //       let diff = diff - dy;
+    //     }
+    //     else{
+    //       let upMoves = upMoves + 1;
+    //       let diff = diff + dx;
+    //     }
+    //   }
+    //   return;
+    // }
+    // /**deals with descending lines in the given axis*/
+    // function void line_helper2(int x, int y, int dx, int dy){
+    //   var int rightMoves, upMoves, diff;
+    //   let rightMoves = 0;
+    //   let upMoves = 0;
+    //   let diff = rightMoves * dy - upMoves * dx //starts of as 0
+    //   while(~(rightMoves > dx) & ~(upMoves < dy)){
+    //     do Screen.drawPixel(x+rightMoves, y+upMoves);
+    //     if(diff > 0){
+    //       let upMoves = upMoves - 1;
+    //       let diff = diff - dx;
+    //     }
+    //     else{
+    //       let rightMoves = rightMoves + 1;
+    //       let diff = diff - dy;
+    //     }
+    //   }
+    //   return;
+    // }
     function void drawLine(int x1, int y1, int x2, int y2) {
-      var int dx, dy, rightMoves, upMoves, diff;
-      let dx = Math.abs(x2-x1);
-      let dy = Math.abs(y2 -y1);
+   if((x1 < 0) | (x1 > 511)) {
+     do Sys.error(8);
+   }
+   if((x2 < 0) | (x2 > 511)) {
+     do Sys.error(8);
+   }
+   if((y1 < 0) | (y1 > 255)) {
+     do Sys.error(8);
+   }
+   if((y2 < 0) | (y2 > 255)) {
+     do Sys.error(8);
+   }
 
-      if (x1 = x2){
-        do drawVertical(x1, y1, x2, y2);
-      }
-      if(y1 = y2){
-        do drawHorizontal(x1, y1, x2, y2);
-      }
-      if((x1 < x2)&( y1 < y2)){
-        do Screen.line_helper1(x1, y1, dx, dy);
-      }
-      if((x1 > x2) & (y1 < y2)){
-        do Screen.line_helper2(x2,y2,-dx, -dy);
-      }
-      if((x1<x2) & (y1 > y2)){
-        do Screen.line_helper2(x1,y1,dx,dy);
-      }
-      if((x1>x2) & (y1>y2)){
-        do Screen.line_helper1(x2,y2, -dx, -dy);
-      }
-      return;
-    }
-    /**deals with ascending lines according to the given axis*/
-    function void line_helper1(int x, int y, int dx, int dy){
-      let rightMoves = 0;
-      let upMoves = 0;
-      let diff = rightMoves * dy - upMoves * dx //starts of as 0
-      while(~(rightMoves > dx) & ~(upMoves > dy)){
-        do Screen.drawPixel(x+rightMoves, y+upMoves);
-        if(diff > 0){
-          let rightMoves = rightMoves + 1;
-          let diff = diff - dy;
-        }
-        else{
-          let upMoves = upMoves + 1;
-          let diff = diff + dx;
-        }
-      }
-      return;
-    }
-    /**deals with descending lines in the given axis*/
-    function void line_helper2(int x, int y, int dx, int dy){
-      let rightMoves = 0;
-      let upMoves = 0;
-      let diff = rightMoves * dy - upMoves * dx //starts of as 0
-      while(~(rightMoves > dx) & ~(upMoves < dy)){
-        do Screen.drawPixel(x+rightMoves, y+upMoves);
-        if(diff > 0){
-          let upMoves = upMoves - 1;
-          let diff = diff - dx;
-        }
-        else{
-          let rightMoves = rightMoves + 1;
-          let diff = diff - dy;
-        }
-      }
-      return;
-    }
+   if(x1 = x2) {
+     do Screen.drawVerticalLine(x1, Math.min(y1, y2), Math.max(y1, y2));
+     return;
+   }
+   if(y1 = y2) {
+     do Screen.drawHorizontalLine(y1, Math.min(x1, x2), Math.max(x1, x2));
+     return;
+   }
+   if((x1 < x2) & (y1 < y2)) {
+     do Screen.drawPosSlopedLine(x1, y1, x2 - x1, y2 - y1);
+     return;
+   }
+   if((x2 < x1) & (y2 < y1)) {
+     do Screen.drawPosSlopedLine(x2, y2, x1 - x2, y1 - y2);
+     return;
+   }
+   if((x1 < x2) & (y1 > y2)) {
+     do Screen.drawNegSlopedLine(x1, y1, x2 - x1, y2 - y1);
+     return;
+   }
+   if((x2 < x1) & (y1 < y2)) {
+     do Screen.drawNegSlopedLine(x2, y2, x1 - x2, y1 - y2);
+     return;
+   }
+
+   return;
+ }
+
+ function void drawPosSlopedLine(int x, int y, int dx, int dy) {
+   var int a, b, d;
+
+   let a = 0;
+   let b = 0;
+   let d = 0;
+   do Screen.drawPixel(x, y);
+   while((a < dx) & (b < dy)) {
+     if(d > 0) {
+       let a = a + 1;
+       let d = d - dy;
+     }
+     else {
+       let b = b + 1;
+       let d = d + dx;
+     }
+     do Screen.drawPixel(x + a, y + b);
+   }
+   return;
+ }
+
+ function void drawNegSlopedLine(int x, int y, int dx, int dy) {
+   var int a, b, d;
+
+   let a = 0;
+   let b = 0;
+   let d = 0;
+   do Screen.drawPixel(x, y);
+   while((a < dx) & (b > dy)) {
+     if(d > 0) {
+       let b = b - 1;
+       let d = d - dx;
+     }
+     else {
+       let a = a + 1;
+       let d = d - dy;
+     }
+     do Screen.drawPixel(x + a, y + b);
+   }
+   return;
+ }
+
+ function void drawVerticalLine(int x, int y1, int y2) {
+   do Screen.drawPixel(x, y1);
+   while(y1 < y2) {
+     let y1 = y1 + 1;
+     do Screen.drawPixel(x, y1);
+   }
+   return;
+ }
+
+ function void drawHorizontalLine(int y, int x1, int x2) {
+   do Screen.drawPixel(x1, y);
+   while(x1 < x2) {
+     let x1 = x1 + 1;
+     do Screen.drawPixel(x1, y);
+   }
+   return;
+ }
+
+ function void drawRectangle(int x1, int y1, int x2, int y2) {
+   if((x1 < 0) | (x1 > 511)) {
+     do Sys.error(9);
+   }
+   if((x2 < 0) | (x2 > 511)) {
+     do Sys.error(9);
+   }
+   if((y1 < 0) | (y1 > 255)) {
+     do Sys.error(9);
+   }
+   if((y2 < 0) | (y2 > 255)) {
+     do Sys.error(9);
+   }
+   if((x1 > x2) | (y1 > y2)) {
+     do Sys.error(9);
+   }
+
+   do Screen.drawVerticalLine(x1, y1, y2);
+   while(x1 < x2) {
+     let x1 = x1 + 1;
+     do Screen.drawVerticalLine(x1, y1, y2);
+   }
+   return;
+ }
 
     /**draws a diagonal line*/
     function void drawVertical(int x, int y, int dy){

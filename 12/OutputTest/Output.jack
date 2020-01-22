@@ -17,43 +17,45 @@
 class Output {
 
     // Character map for displaying characters
-    static Array line, charMaps, screen, cursor;
-    static int row, col;
+    static Array charMaps;
+    static int row,col;
+    static boolean white,black;
+    static Array screen,line,cursor;
 
     /** Initializes the screen, and locates the cursor at the screen's top-left. */
     function void init() {
-    //initialize cursor
-      let cursor = Array.new(2);
-  		let cursor[0] = 255;
-  		let cursor[1] = -1 & 255;
-    //initialize screen
+      let screen = 16384;
+      let white = 0;
+      let black = 1;
       let row = 0;
-  		let col = 0;
-  		let screen = 16384;
+      let col = 0;
+      let cursor = Array.new(2);
+      let cursor[0] = 255;
+      let cursor[1] = -1&255;
+      do Output.initMap();
+      do Output.initialize_line();
+      return;
+    }
 
-		do Output.initMap();
-		do Output.initialize_line();
-		return;
-}
     /**
     creating a new line consisting of 12 empty slots (white slots)
     */
-    function void initialize_line() {
-  		let line = Array.new(12);
-  		let line[0] = 0;
-  		let line[1] = 0;
-  		let line[2] = 0;
-  		let line[3] = 0;
-  		let line[4] = 0;
-  		let line[5] = 0;
-  		let line[6] = 0;
-  		let line[7] = 0;
-  		let line[8] = 0;
-  		let line[9] = 0;
-  		let line[10] = 0;
-  		let line[11] = 0;
-  		return;
-  	}
+    function void initialize_line(){
+      let line = Array.new(12);
+      let line[0] = 0;
+      let line[1] = 0;
+      let line[2] = 0;
+      let line[3] = 0;
+      let line[4] = 0;
+      let line[5] = 0;
+      let line[6] = 0;
+      let line[7] = 0;
+      let line[8] = 0;
+      let line[9] = 0;
+      let line[10] = 0;
+      let line[11] = 0;
+      return;
+    }
 
 
     // Initializes the character map array
@@ -62,10 +64,12 @@ class Output {
 
         let charMaps = Array.new(127);
 
-        // black square (used for non printable characters)
+        // Black square, used for displaying non-printable characters.
         do Output.create(0,63,63,63,63,63,63,63,63,63,0,0);
 
         // Assigns the bitmap for each character in the charachter set.
+        // The first parameter is the character index, the next 11 numbers
+        // are the values of each row in the frame that represents this character.
         do Output.create(32,0,0,0,0,0,0,0,0,0,0,0);          //
         do Output.create(33,12,30,30,30,12,12,0,12,12,0,0);  // !
         do Output.create(34,54,54,20,0,0,0,0,0,0,0,0);       // "
@@ -207,65 +211,63 @@ class Output {
     /** Moves the cursor to the j-th column of the i-th row,
      *  and erases the character displayed there. */
     function void moveCursor(int i, int j) {
-      if (j < 64 & j > -1 ) {
-  			let col = j;
-  		}
-  		else {
-  			let col = 0;
+      if (i<23 & i>-1){ // moving to the i-th row
+        let row = i;
       }
-      if ( i < 23 & i > -1) {
-  			let row = i;
-  		}
-  		else {
-  			let row = 0;
-  		}
-  		return;
+      else{
+        let row = 0;
       }
+      if (j<64 & j>-1){ //moving to the j-th column
+        let col = j;
+      }
+      else{
+        let col = 0;
+      }
+
+      return;
+    }
 
     /** Displays the given character at the cursor location,
      *  and advances the cursor one column forward. */
     function void printChar(char c) {
       var Array map;
-  		var int i,curr_pixel,offset,addr;
+      var int addr,offset,i,curr_pixel;
+      let i = 0;
+      let offset = col&1;
+      let addr = ((row*352)+(col/2)); //32*11 = 352, 16/8 = 2
+      let map = Output.getMap(c); //get relevant coords
 
-  		let map = Output.getMap(c);
-  		let addr = (row * 32 * 11) + (col / (16 / 8));
-  		let offset = col & 1;
-
-  		let i = 0;
-  		while (i < 11) {
-  			let curr_pixel = map[i];
-  			if (offset = 1) {
-  				let curr_pixel = curr_pixel * 256;
-  			}
-  			let screen[addr] = screen[addr] & cursor[offset] | curr_pixel;
-  			let addr = addr + 32;
-  			let i = i + 1;
-  		}
-
-  		if (col = 63) {
-  			if (row = 22) {
-  				do Output.moveCursor(0,0);
-  			}
-  			else {
-  				do Output.println();
-  			}
-  		}
-  		else {
-  			let col = col + 1;
-  		}
-  		return;
+      while (i<11){
+        let curr_pixel=map[i];
+        if (offset=1){
+          let curr_pixel = curr_pixel*256;
+        }
+        let screen[addr]= screen[addr]&cursor[offset]|curr_pixel;
+        let addr=addr+32;
+        let i = i+1;
       }
+      if (col=63){
+        if(row=22){
+        do Output.moveCursor(0,0);
+        }
+        else{
+          do Output.println();
+        }
+      }
+      else{
+        let col = col+1;
+      }
+      return;
+    }
 
     /** displays the given string starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printString(String s) {
-      var int i,length,char_val;
+      var int i,length;
       let i = 0;
-      let length = s.length();
-      while (i< s.length()) {  // objects of type string have length property
-        let char_val = s.charAt(i);//i-th character of this string
-        do Output.printChar(char_val);
+      let length = s.length();  // objects of type string have length property
+      while (i< length) {
+        do Output.printChar(s.charAt(i));//i-th character of this string
         let i = i + 1;
       }
       return;
@@ -274,45 +276,41 @@ class Output {
     /** Displays the given integer starting at the cursor location,
      *  and advances the cursor appropriately. */
     function void printInt(int i) {
-      var String s;
-  		let s = String.new(16);
-  		do s.setInt(i);
-  		do Output.printString(s);
-  		do s.dispose();
-  		return;
-      }
+      var string s;
+      let s = String.new(16);
+      do s.setInt(i);
+      do Output.printString(s);
+      do s.dispose();
+      return;
+    }
 
     /** Advances the cursor to the beginning of the next line. */
     function void println() {
-      if (~(row < 22)) {
-        let row = 0;
-  		}
-  		else {
-        let line[row] = col;
-  			let row = row + 1;
-  		}
-  		let col = 0;
-  		return;
+      if (row<22){
+        let line[row]=col;
+        let row = row+1;
       }
+      else{
+        let row = 0;
+      }
+      let col=0;
+      return;
+    }
 
     /** Moves the cursor one column back. */
     function void backSpace() {
-      if (col > 0) {
-  			let col = col - 1;
-  		}
-      if (col = 0) {
-  			if (row > 0) {
-  				let row = row - 1;
-  				let col = line[row];
-  			}
-  			return;
-  		}
-      if (col<0){
+      if(col=0){
+        if(row>0){
+          let row = row-1;
+          let col = line[row];
+        }
         return;
       }
-
-  		do Output.printChar(" ");
-  		let col = col - 1;
-  		return;
+      if (col>0){
+        let col = col-1;
       }
-  }
+      do Output.printChar(" ");
+      let col = col-1;
+      return;
+    }
+}
