@@ -36,7 +36,7 @@ class Keyboard {
      * F1 - F12 = 141 - 152
      */
     function char keyPressed() {
-      return kbd[0];
+      return Memory.peek(24576);
       }
 
 
@@ -50,7 +50,7 @@ class Keyboard {
       while(Keyboard.keyPressed()=0){ //nothing is pressed
         // do nothing
       }
-      let c = kbd[0];
+      let c =Keyboard.keyPressed();
       while ((Keyboard.keyPressed()=c)){ // c is still pressed
         // do nothing
       }
@@ -66,12 +66,12 @@ class Keyboard {
     function String readLine(String message) {
       var String str;
       var int c;
-      let str = String.new(1); //1 is chosen arbitrarily.
+      let str = String.new(100); //1 is chosen arbitrarily.
       do Output.printString(message);
 
       let c = Keyboard.readChar();
-      while(~(c=String.newline())){ // haven't reached end-of-line yet.
-          if(c=String.backspace()){ // deleting the char from str.
+      while(~(c=String.newLine())){ // haven't reached end-of-line yet.
+          if(c=String.backSpace()){ // deleting the char from str.
             do str.eraseLastChar();
           }
           else{ //adding more chars
@@ -79,7 +79,6 @@ class Keyboard {
           }
           let c = Keyboard.readChar();
         }
-      }
       return str;
     }
 
@@ -91,7 +90,7 @@ class Keyboard {
      */
     function int readInt(String message) {
       var String str;
-      let str = Keyboard.readline(message);
+      let str = Keyboard.readLine(message);
       return str.intValue();
     }
 }
