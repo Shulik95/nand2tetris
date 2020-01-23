@@ -12,11 +12,14 @@
  */
 class String {
     field Array str;
-    field int length,maxLength;
+    field int length,maximum_lengh;
     /** constructs a new empty string with a maximum length of maxLength
      *  and initial length of 0. */
     constructor String new(int maxLength) {
-      let maxLength = maxLength;
+      if(maxLength = 0){
+        let maxLength = 1; //handles length 0 Strings
+      }
+      let maximum_lengh = maxLength;
       let str = Array.new(maxLength);
       let length = 0;
       return this;
@@ -24,7 +27,8 @@ class String {
 
     /** Disposes this string. */
     method void dispose() {
-      do Memory.deAlloc(str);
+      do Array.dispose(str);
+      return;
     }
 
     /** Returns the current length of this string. */
@@ -45,7 +49,7 @@ class String {
 
     /** Appends c to this string's end and returns this string. */
     method String appendChar(char c) {
-      if (length<maxLength){ //the current length is no greated than the provided
+      if (length<maximum_lengh){ //the current length is no greated than the provided
                             //max length - we can add more chars to the strings.
         let str[length]=c;
         let length = length +1;
@@ -66,6 +70,7 @@ class String {
       var boolean is_neg;
       var int i,val,d;
       let val = 0;
+      let i = 0;
       // first we find out if its a positive of negative number.
       // we also Initialize the counter accordingly
       if ((str[0]=45)&(length>0)){
@@ -74,14 +79,13 @@ class String {
       }
       else{
         let is_neg = false;
-        let i =0;
       }
-      while(~(i>length){
+      while(i<length){
         if((str[i]>47)&(str[i]<58)){ //0<=str[i]<=9
-          let d = str[i]-48;
+          let d = str[i]-48; // get integer value
           let val = val*10+d;
-          let i = i+1;
         }
+        let i = i+1;
       }
       if(is_neg){
         return -val;
@@ -93,30 +97,39 @@ class String {
 
     /** Sets this string to hold a representation of the given value. */
     method void setInt(int val) {
-        let len=0;
-        if (~(val<0)){// val>=0
-          do setInt_helper(val);
-        }
-        else{ // val<0
-          let val=-val;
-          do String.appendChar(45); // "-"
-        }
-        return;
-    }
-    method void setInt_helper(int val){
-      var int modulo;
-      let modulo = val-((val/10)*10);
-      if (val<10){
-        do String.appendChar(modulo+48);
+      let length = 0; //allows us to overwrite string
+      if (val < 0){
+        do appendChar(45);
+        let val = -val; //treat the val as positiv one.
       }
-      else{
-        do String.setInt_helper((val/10));
-        do String.appendChar(mod+48);
-      }
+      do setInt_helper(val);
       return;
     }
 
+    /**implementation of the suggested recursiv psudo code*/
+    method void setInt_helper(int val){
+      var int lastDig, tempNum;
+      var String currChar;
+      let lastDig = getMod(val, 10);
+      let currChar = lastDig + 48; //transfrom to ascii.
+      if (val < 10){ //base case of th recursion, the number is 1 digit long
+        do appendChar(currChar);
+      }
+      else{ //the number has more than one digit.
+        let tempNum = val / 10; // shorten the val, send it recursivly
+        do setInt_helper(tempNum);
+        do appendChar(currChar);
+      }
+		return;
+    }
 
+    /** Helper method for getting modulo of a given number*/
+    method int getMod(int x, int y){
+      var int r, val;
+      let r = Math.divide(x,y);
+      let val = x - (r * y);
+      return val;
+    }
     /** Returns the new line character. */
     function char newLine() {
       return 128;
