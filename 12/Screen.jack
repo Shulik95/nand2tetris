@@ -17,7 +17,7 @@ class Screen {
     function void init() {
       let black = true;
       let white = false;
-      let color = white;
+      let color = black;
       let screen = 16384;
       return;
     }
@@ -257,18 +257,10 @@ class Screen {
     function void drawRectangle(int x1, int y1, int x2, int y2) {
       var int start;
       let start = x1;
-      if(x2 > x1){
         while(~(start>x2)){
           do Screen.drawLine(start, y1, start, y2);
           let start = start + 1;
         }
-      }
-      else{
-        while(~(start < x2)){
-          do Screen.drawLine(start, y1, start, y2);
-          let start = start - 1;
-        }
-      }
       return;
     }
 
@@ -280,8 +272,8 @@ class Screen {
         return;
       }
       while (~(dy>r)){
-        let length = Math.sqrt(r*r-dy*dy);
-        do Screen.drawLine(x-length,y+dy,x+length,y+dy);
+        let length = Math.sqrt((r*r)-(dy*dy));
+        do Screen.drawHorizontalLine(y+dy, x-length, x + length);
         let dy = dy+1;
       }
       return;
