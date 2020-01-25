@@ -1,0 +1,81 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */
+class Memory {
+
+    static array ram, heap;
+    static int freeList;
+
+    /** Initializes the class. */
+    function void init() {
+      let ram = 0;
+      let heap = 2048;
+      let freeList = 0;
+      let heap[0] = 0;
+      let heap[1] = 14335;
+      return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+      return ram[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+      let ram[address] = value;
+      return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int size) {
+      var int block, next;
+      let block = freeList;
+      if (heap[block + 1] > size + 1) {  // if the first segment is good
+        if (heap[block + 1] = size + 2) {
+          if (heap[block] = 0) {return -1;} // end of segments
+          let freeList = heap[block];
+        }
+        else {
+          let freeList = block + size + 2;
+          let heap[freeList + 1] = heap[block + 1] - 2 - size;
+        }
+        return block + 2;
+      }
+      let next = heap[freeList];
+      while (heap[next + 1] < size + 2)  {
+        if (next = 0) {return -1;}  // if no more segments return failure
+        let block = next;
+        let next = heap[next];
+      }  // now we found a good segment
+      if (heap[next + 1] = size + 2)  {
+        let heap[block] = heap[next];
+      }
+      else {
+        let heap[block] = next + 2 + size; // moving pointer to segment remainder
+        let heap[next + 1] = heap[next + 1] - 2 - size; // updating segment size
+      }
+      return next + 2 + 2048; // to become a ram value
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. */
+    function void deAlloc(Array o) {
+      var int runner;
+      let runner = freeList;
+      while (heap[runner] > 0) {
+        let runner = heap[runner];
+      }
+      let heap[runner] = o;
+      let ram[o] = 0;
+      return;
+    }
+}

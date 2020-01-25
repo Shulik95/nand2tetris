@@ -1,0 +1,307 @@
+function Square.new 0
+push constant 3
+call Memory.alloc 1
+pop pointer 0
+push argument 0
+pop this 0
+push argument 1
+pop this 1
+push argument 2
+pop this 2
+push pointer 0
+pop argument 0
+call Square.draw 1
+pop temp 0
+push pointer 0
+return
+function Square.dispose 0
+push argument 0
+pop pointer 0
+push pointer 0
+pop argument 0
+push pointer 0
+call Square.deAlloc 2
+not
+if-goto IF_FALSE1
+not
+if-goto IF_FALSE2
+not
+if-goto IF_FALSE3
+not
+if-goto IF_FALSE4
+push this 1
+not
+if-goto IF_FALSE5
+push this 1
+push this 2
+add
+not
+if-goto IF_FALSE6
+not
+if-goto IF_FALSE7
+not
+if-goto IF_FALSE8
+not
+if-goto IF_FALSE9
+push this 1
+not
+if-goto IF_FALSE10
+push this 1
+push this 2
+add
+not
+if-goto IF_FALSE11
+not
+if-goto IF_FALSE12
+not
+if-goto IF_FALSE13
+push this 2
+not
+if-goto IF_FALSE14
+push this 0
+push this 2
+add
+push constant 510
+lt
+not
+if-goto IF_FALSE15
+push this 2
+eq
+push constant 2
+add
+not
+if-goto IF_FALSE16
+not
+if-goto IF_FALSE17
+not
+if-goto IF_FALSE18
+not
+if-goto IF_FALSE19
+push this 2
+push this 2
+eq
+push constant 2
+sub
+not
+if-goto IF_FALSE20
+not
+if-goto IF_FALSE21
+not
+if-goto IF_FALSE22
+not
+if-goto IF_FALSE23
+not
+if-goto IF_FALSE24
+push this 1
+push this 2
+add
+push constant 1
+sub
+not
+if-goto IF_FALSE25
+push this 1
+push this 2
+add
+not
+if-goto IF_FALSE26
+push this 1
+push constant 2
+sub
+not
+if-goto IF_FALSE27
+push pointer 0
+pop argument 0
+push constant 1
+neg
+call Square.setColor 2
+not
+if-goto IF_FALSE28
+push pointer 0
+pop argument 0
+push this 0
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push constant 1
+add
+call Square.drawRectangle 5
+not
+if-goto IF_FALSE29
+push constant 0
+return
+goto IF_TRUE29
+label IF_TRUE29
+push pointer 0
+pop argument 0
+call Square.moveDown 1
+not
+if-goto IF_FALSE30
+push this 1
+push this 2
+add
+not
+if-goto IF_FALSE31
+not
+if-goto IF_FALSE32
+not
+if-goto IF_FALSE33
+push this 1
+not
+if-goto IF_FALSE34
+push this 1
+push constant 1
+add
+not
+if-goto IF_FALSE35
+push this 1
+push constant 2
+add
+not
+if-goto IF_FALSE36
+push pointer 0
+pop argument 0
+push constant 1
+neg
+call Square.setColor 2
+not
+if-goto IF_FALSE37
+push pointer 0
+pop argument 0
+push this 0
+push this 1
+push this 2
+add
+push constant 1
+sub
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Square.drawRectangle 5
+not
+if-goto IF_FALSE38
+push constant 0
+return
+goto IF_TRUE38
+label IF_TRUE38
+push pointer 0
+pop argument 0
+call Square.moveLeft 1
+not
+if-goto IF_FALSE39
+push constant 1
+not
+if-goto IF_FALSE40
+push pointer 0
+pop argument 0
+push constant 0
+call Square.setColor 2
+not
+if-goto IF_FALSE41
+push pointer 0
+pop argument 0
+push this 0
+push this 2
+add
+push constant 1
+sub
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Square.drawRectangle 5
+not
+if-goto IF_FALSE42
+push this 0
+push constant 2
+sub
+not
+if-goto IF_FALSE43
+push pointer 0
+pop argument 0
+push constant 1
+neg
+call Square.setColor 2
+not
+if-goto IF_FALSE44
+push pointer 0
+pop argument 0
+push this 0
+push this 1
+push this 0
+push constant 1
+add
+push this 1
+push this 2
+add
+call Square.drawRectangle 5
+not
+if-goto IF_FALSE45
+push constant 0
+return
+goto IF_TRUE45
+label IF_TRUE45
+push pointer 0
+pop argument 0
+call Square.moveRight 1
+not
+if-goto IF_FALSE46
+push this 0
+push this 2
+add
+not
+if-goto IF_FALSE47
+not
+if-goto IF_FALSE48
+not
+if-goto IF_FALSE49
+push this 1
+not
+if-goto IF_FALSE50
+push this 1
+push this 2
+add
+not
+if-goto IF_FALSE51
+push this 0
+push constant 2
+add
+not
+if-goto IF_FALSE52
+push pointer 0
+pop argument 0
+push constant 1
+neg
+call Square.setColor 2
+not
+if-goto IF_FALSE53
+push pointer 0
+pop argument 0
+push this 0
+push this 2
+add
+push constant 1
+sub
+push this 1
+push this 0
+push this 2
+add
+push this 1
+push this 2
+add
+call Square.drawRectangle 5
+not
+if-goto IF_FALSE54
+push constant 0
+return
+goto IF_TRUE54
+label IF_TRUE54
+goto IF_TRUE53
+label IF_TRUE53

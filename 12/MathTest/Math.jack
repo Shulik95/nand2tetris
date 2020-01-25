@@ -9,7 +9,7 @@
  */
 class Math {
     static Array twoToThe;
-    static int  recursive_qy;
+    static int recursive_qy;
 
     /** Initializes the library. */
     function void init() {
@@ -54,7 +54,7 @@ class Math {
         let i = 0;
         let shiftedX = x;
         while (i<16){
-          if (Math.bit_is_one(y,i) = true){ // the i'th element of y is 1
+          if (Math.bit_is_one(y,i)){ // the i'th element of y is 1
             let sum = sum + shiftedX;
           }
           let shiftedX = shiftedX + shiftedX;
@@ -68,12 +68,7 @@ class Math {
     else - return False
     */
     function boolean bit_is_one (int x, int i){
-      if((x & twoToThe[i])=0){
-        return true;
-      }
-      else{
-        return false;
-      }
+      return (~((x & twoToThe[i])=0));
     }
 
     /** Returns the integer part of x/y.
@@ -83,29 +78,37 @@ class Math {
      */
     function int divide(int x, int y) {
       var boolean is_neg;
-      var int q, posX, posY, finalVal,recursive_qy;
+      var int posX, posY, finalVal;
       if (((x < 0) & (y > 0)) | ((x>0) & (y<0))){
         let is_neg = true; //handles neg numbers
       }
       let posX = Math.abs(x);
       let posY = Math.abs(y);
-      if ((y > x) | (y < 0) ){ //handles overflow
-        let recursive_qy = 0;
-        return 0;
-      }
-      let q = Math.divide(posX, (posY+posY));
-      if ((posX-recursive_qy)<posY){
-        let finalVal = q + q;
-      }
-      else{
-        let recursive_qy = recursive_qy + posY;
-        let finalVal = (q + q) + 1;
-      }
+      let finalVal = Math.div_helper(posX, posY);
       if (is_neg){
           return -finalVal;
       }
       else{
         return finalVal;
+      }
+    }
+
+    /**
+    * helper method for the main divide method
+    */
+    function int div_helper(int x, int y){
+      var int q;
+      if ((y > x) | (y < 0) ){ //handles overflow
+        let recursive_qy = 0;
+        return 0;
+      }
+      let q = Math.div_helper(x, (y + y));
+      if ((x-recursive_qy) < y){
+        return q + q;
+      }
+      else{
+        let recursive_qy = recursive_qy + y;
+        return (q + q) + 1;
       }
     }
 
@@ -119,7 +122,7 @@ class Math {
                                       // deis_negated array twoToThe[i]
         let squared = temp * temp;
         if (~(squared>x) & (squared>0)){
-          let ans = ans + temp;
+          let ans = temp;
         }
         let i = i-1;
       }
@@ -141,6 +144,9 @@ class Math {
         return b;
       }
       return a;
-
+    }
+    /** helper method for other classes*/
+    function int getPowerOf(int x){
+      return twoToThe[x];
     }
 }

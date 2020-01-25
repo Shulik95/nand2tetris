@@ -1,0 +1,16 @@
+class Main {
+   function void main() {
+     var Array a;
+     var int length;
+     var int i, sum;
+
+     let length = Keyboard.readInt("How many numbers? ");
+     let a = Array.new(length); // constructs the array
+
+     let i = 0;
+
+        let a[i] = Keyboard.readInt("Enter a number: ");
+
+     return;
+   }
+}
